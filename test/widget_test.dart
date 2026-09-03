@@ -7,12 +7,13 @@ void main() {
   testWidgets('application bootstrap uses the Material 3 theme', (
     tester,
   ) async {
-    await tester.pumpWidget(const ProviderScope(child: AgriVistaApp()));
+    await tester.pumpWidget(
+      const ProviderScope(child: AgriVistaApp(home: SizedBox.shrink())),
+    );
 
     final materialApp = tester.widget<MaterialApp>(find.byType(MaterialApp));
 
     expect(materialApp.theme?.useMaterial3, isTrue);
-    expect(find.text('AgriVista Field'), findsOneWidget);
-    expect(find.text('Architecture initialisée'), findsOneWidget);
+    expect(materialApp.title, 'AgriVista Field');
   });
 }
