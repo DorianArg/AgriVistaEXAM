@@ -1,10 +1,10 @@
 import 'package:agrivista_field/core/utils/date_formatter.dart';
+import 'package:agrivista_field/core/widgets/async_state_views.dart';
 import 'package:agrivista_field/features/interventions/domain/entities/intervention.dart';
 import 'package:agrivista_field/features/interventions/domain/entities/statut_intervention.dart';
 import 'package:agrivista_field/features/interventions/presentation/providers/interventions_provider.dart';
 import 'package:agrivista_field/features/interventions/presentation/widgets/intervention_badge.dart';
 import 'package:agrivista_field/features/interventions/presentation/widgets/intervention_history.dart';
-import 'package:agrivista_field/features/interventions/presentation/widgets/intervention_state_views.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -29,15 +29,16 @@ final class _InterventionDetailPageState
     return Scaffold(
       appBar: AppBar(title: const Text('Détail intervention')),
       body: interventionsState.when(
-        loading: () => const InterventionsLoadingView(),
-        error: (error, _) => InterventionsErrorView(
+        loading: () =>
+            const AppLoadingView(message: 'Chargement de l’intervention…'),
+        error: (error, _) => AppErrorView(
           error: error,
           onRetry: () => ref.read(interventionsProvider.notifier).recharger(),
         ),
         data: (data) {
           final intervention = _findIntervention(data.interventions);
           if (intervention == null) {
-            return const InterventionsEmptyView(
+            return const AppEmptyView(
               message: 'Cette intervention est introuvable.',
             );
           }
@@ -101,73 +102,78 @@ final class _DetailContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            intervention.station,
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            intervention.domaine,
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 10,
-            runSpacing: 8,
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 720),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              PriorityBadge(priorite: intervention.priorite),
-              StatusBadge(statut: intervention.statut),
-            ],
-          ),
-          const SizedBox(height: 24),
-          const _SectionTitle('Date prévue'),
-          Text(formatDateFr(intervention.datePrevue)),
-          const SizedBox(height: 24),
-          const _SectionTitle('Description'),
-          Text(intervention.description),
-          const SizedBox(height: 24),
-          const _SectionTitle('Localisation'),
-          Card(
-            margin: EdgeInsets.zero,
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Text(
+                intervention.station,
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                intervention.domaine,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 10,
+                runSpacing: 8,
                 children: [
-                  Text(
-                    intervention.domaine,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text('Latitude : ${intervention.latitude}'),
-                  const SizedBox(height: 4),
-                  Text('Longitude : ${intervention.longitude}'),
+                  PriorityBadge(priorite: intervention.priorite),
+                  StatusBadge(statut: intervention.statut),
                 ],
               ),
-            ),
+              const SizedBox(height: 24),
+              const _SectionTitle('Date prévue'),
+              Text(formatDateFr(intervention.datePrevue)),
+              const SizedBox(height: 24),
+              const _SectionTitle('Description'),
+              Text(intervention.description),
+              const SizedBox(height: 24),
+              const _SectionTitle('Localisation'),
+              Card(
+                margin: EdgeInsets.zero,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        intervention.domaine,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text('Latitude : ${intervention.latitude}'),
+                      const SizedBox(height: 4),
+                      Text('Longitude : ${intervention.longitude}'),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              const _SectionTitle('Historique'),
+              InterventionHistory(entries: intervention.historique),
+              const SizedBox(height: 16),
+              _StatusAction(
+                statut: intervention.statut,
+                isUpdating: isUpdating,
+                onPressed: onUpdateStatus,
+              ),
+              const SizedBox(height: 12),
+            ],
           ),
-          const SizedBox(height: 24),
-          const _SectionTitle('Historique'),
-          InterventionHistory(entries: intervention.historique),
-          const SizedBox(height: 16),
-          _StatusAction(
-            statut: intervention.statut,
-            isUpdating: isUpdating,
-            onPressed: onUpdateStatus,
-          ),
-          const SizedBox(height: 12),
-        ],
+        ),
       ),
     );
   }

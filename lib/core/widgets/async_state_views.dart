@@ -1,30 +1,32 @@
 import 'package:agrivista_field/core/errors/app_failure.dart';
 import 'package:flutter/material.dart';
 
-final class InterventionsLoadingView extends StatelessWidget {
-  const InterventionsLoadingView({super.key});
+final class AppLoadingView extends StatelessWidget {
+  const AppLoadingView({required this.message, super.key});
+
+  final String message;
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          CircularProgressIndicator(),
-          SizedBox(height: 20),
-          Text('Chargement des interventions…'),
-        ],
+    return Center(
+      child: Semantics(
+        label: message,
+        liveRegion: true,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(),
+            const SizedBox(height: 20),
+            Text(message),
+          ],
+        ),
       ),
     );
   }
 }
 
-final class InterventionsErrorView extends StatelessWidget {
-  const InterventionsErrorView({
-    required this.error,
-    required this.onRetry,
-    super.key,
-  });
+final class AppErrorView extends StatelessWidget {
+  const AppErrorView({required this.error, required this.onRetry, super.key});
 
   final Object error;
   final VoidCallback onRetry;
@@ -55,8 +57,8 @@ final class InterventionsErrorView extends StatelessWidget {
   }
 }
 
-final class InterventionsEmptyView extends StatelessWidget {
-  const InterventionsEmptyView({required this.message, super.key});
+final class AppEmptyView extends StatelessWidget {
+  const AppEmptyView({required this.message, super.key});
 
   final String message;
 

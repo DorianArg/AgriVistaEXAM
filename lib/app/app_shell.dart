@@ -1,6 +1,7 @@
 import 'package:agrivista_field/features/interventions/domain/entities/intervention.dart';
 import 'package:agrivista_field/features/interventions/presentation/pages/intervention_detail_page.dart';
 import 'package:agrivista_field/features/interventions/presentation/pages/interventions_page.dart';
+import 'package:agrivista_field/features/profile/presentation/pages/profile_page.dart';
 import 'package:flutter/material.dart';
 
 final class AppShell extends StatefulWidget {
@@ -23,7 +24,7 @@ final class _AppShellState extends State<AppShell> {
         index: _selectedIndex,
         children: [
           InterventionsPage(onInterventionSelected: _onInterventionSelected),
-          const _ProfilePlaceholder(),
+          const ProfilePage(),
         ],
       ),
       bottomNavigationBar: NavigationBar(
@@ -51,28 +52,6 @@ final class _AppShellState extends State<AppShell> {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => InterventionDetailPage(interventionId: intervention.id),
-      ),
-    );
-  }
-}
-
-final class _ProfilePlaceholder extends StatelessWidget {
-  const _ProfilePlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.person_outline,
-            size: 56,
-            color: Theme.of(context).colorScheme.primary,
-          ),
-          const SizedBox(height: 12),
-          const Text('Profil disponible prochainement.'),
-        ],
       ),
     );
   }

@@ -1,10 +1,10 @@
 import 'package:agrivista_field/features/interventions/domain/entities/donnees_interventions.dart';
 import 'package:agrivista_field/features/interventions/domain/entities/intervention.dart';
+import 'package:agrivista_field/core/widgets/async_state_views.dart';
 import 'package:agrivista_field/features/interventions/presentation/providers/intervention_filters.dart';
 import 'package:agrivista_field/features/interventions/presentation/providers/interventions_provider.dart';
 import 'package:agrivista_field/features/interventions/presentation/widgets/intervention_card.dart';
 import 'package:agrivista_field/features/interventions/presentation/widgets/intervention_filters_bar.dart';
-import 'package:agrivista_field/features/interventions/presentation/widgets/intervention_state_views.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -38,9 +38,9 @@ final class InterventionsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return state.when(
-      loading: () => const InterventionsLoadingView(),
-      error: (error, _) =>
-          InterventionsErrorView(error: error, onRetry: onRetry),
+      loading: () =>
+          const AppLoadingView(message: 'Chargement des interventions…'),
+      error: (error, _) => AppErrorView(error: error, onRetry: onRetry),
       data: (data) => _InterventionsDataView(
         data: data,
         onInterventionSelected: onInterventionSelected,
@@ -80,7 +80,7 @@ final class _InterventionsDataView extends ConsumerWidget {
           const SizedBox(height: 12),
           Expanded(
             child: interventions.isEmpty
-                ? InterventionsEmptyView(
+                ? AppEmptyView(
                     message: data.interventions.isEmpty
                         ? 'Aucune intervention disponible.'
                         : 'Aucune intervention ne correspond à votre recherche.',

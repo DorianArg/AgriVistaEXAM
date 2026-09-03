@@ -9,15 +9,41 @@ abstract final class AppTheme {
       seedColor: _seedColor,
       brightness: Brightness.light,
     );
+    final baseTextTheme = Typography.material2021().black;
 
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
+      textTheme: baseTextTheme.copyWith(
+        headlineSmall: baseTextTheme.headlineSmall?.copyWith(
+          fontWeight: FontWeight.w700,
+        ),
+        titleLarge: baseTextTheme.titleLarge?.copyWith(
+          fontWeight: FontWeight.w700,
+        ),
+      ),
       scaffoldBackgroundColor: _surfaceColor,
       appBarTheme: AppBarTheme(
         centerTitle: true,
         backgroundColor: colorScheme.primary,
         foregroundColor: colorScheme.onPrimary,
+        elevation: 0,
+        scrolledUnderElevation: 2,
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        height: 72,
+        backgroundColor: colorScheme.surface,
+        indicatorColor: colorScheme.secondaryContainer,
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          return baseTextTheme.labelMedium?.copyWith(
+            color: states.contains(WidgetState.selected)
+                ? colorScheme.onSurface
+                : colorScheme.onSurfaceVariant,
+            fontWeight: states.contains(WidgetState.selected)
+                ? FontWeight.w700
+                : FontWeight.w500,
+          );
+        }),
       ),
       cardTheme: CardThemeData(
         elevation: 0,
@@ -34,6 +60,14 @@ abstract final class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: colorScheme.surface,
+        selectedColor: colorScheme.secondaryContainer,
+        side: BorderSide(color: colorScheme.outlineVariant),
+        shape: const StadiumBorder(),
+        showCheckmark: false,
+        labelStyle: baseTextTheme.labelLarge,
       ),
     );
   }
