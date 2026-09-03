@@ -26,4 +26,19 @@ final class Intervention {
   final DateTime datePrevue;
   final String description;
   final List<ActionHistorique> historique;
+
+  Intervention avecStatut(StatutIntervention nouveauStatut) {
+    return Intervention(
+      id: id,
+      station: station,
+      domaine: domaine,
+      latitude: latitude,
+      longitude: longitude,
+      priorite: priorite,
+      statut: nouveauStatut,
+      datePrevue: datePrevue,
+      description: description,
+      historique: historique,
+    );
+  }
 }

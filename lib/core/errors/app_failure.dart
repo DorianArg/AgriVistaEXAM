@@ -33,3 +33,15 @@ final class DataParsingFailure extends AppFailure {
 final class UnknownFailure extends AppFailure {
   const UnknownFailure([super.message = 'Une erreur inattendue est survenue.']);
 }
+
+final class LocalStorageFailure extends AppFailure {
+  const LocalStorageFailure([
+    super.message = 'Le stockage local est indisponible.',
+  ]);
+}
+
+final class InvalidStatusTransitionFailure extends AppFailure {
+  const InvalidStatusTransitionFailure([
+    super.message = 'Cette intervention ne peut plus changer de statut.',
+  ]);
+}
