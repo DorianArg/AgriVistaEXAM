@@ -1,4 +1,5 @@
 import 'package:agrivista_field/features/interventions/domain/entities/intervention.dart';
+import 'package:agrivista_field/features/interventions/presentation/pages/intervention_detail_page.dart';
 import 'package:agrivista_field/features/interventions/presentation/pages/interventions_page.dart';
 import 'package:flutter/material.dart';
 
@@ -47,11 +48,9 @@ final class _AppShellState extends State<AppShell> {
   }
 
   void _onInterventionSelected(Intervention intervention) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Détail de ${intervention.station} disponible à l’étape 5.',
-        ),
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => InterventionDetailPage(interventionId: intervention.id),
       ),
     );
   }

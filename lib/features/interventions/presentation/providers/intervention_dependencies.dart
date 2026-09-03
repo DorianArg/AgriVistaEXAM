@@ -4,6 +4,7 @@ import 'package:agrivista_field/features/interventions/data/datasources/interven
 import 'package:agrivista_field/features/interventions/data/datasources/intervention_remote_data_source.dart';
 import 'package:agrivista_field/features/interventions/data/repositories/intervention_repository_impl.dart';
 import 'package:agrivista_field/features/interventions/domain/repositories/intervention_repository.dart';
+import 'package:agrivista_field/features/interventions/domain/usecases/mettre_a_jour_statut.dart';
 import 'package:agrivista_field/features/interventions/domain/usecases/obtenir_interventions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -34,4 +35,8 @@ final interventionRepositoryProvider = Provider<InterventionRepository>((ref) {
 
 final obtenirInterventionsProvider = Provider((ref) {
   return ObtenirInterventions(ref.watch(interventionRepositoryProvider));
+});
+
+final mettreAJourStatutProvider = Provider((ref) {
+  return MettreAJourStatut(ref.watch(interventionRepositoryProvider));
 });
