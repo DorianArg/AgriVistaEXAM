@@ -5,6 +5,7 @@ import 'package:agrivista_field/features/interventions/domain/entities/statut_in
 import 'package:agrivista_field/features/interventions/presentation/providers/interventions_provider.dart';
 import 'package:agrivista_field/features/interventions/presentation/widgets/intervention_badge.dart';
 import 'package:agrivista_field/features/interventions/presentation/widgets/intervention_history.dart';
+import 'package:agrivista_field/features/interventions/presentation/widgets/compte_rendu_section.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -164,6 +165,8 @@ final class _DetailContent extends StatelessWidget {
               const SizedBox(height: 24),
               const _SectionTitle('Historique'),
               InterventionHistory(entries: intervention.historique),
+              const SizedBox(height: 24),
+              CompteRenduSection(interventionId: intervention.id),
               const SizedBox(height: 16),
               _StatusAction(
                 statut: intervention.statut,

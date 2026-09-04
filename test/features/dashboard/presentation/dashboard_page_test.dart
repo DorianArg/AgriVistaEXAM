@@ -3,14 +3,17 @@ import 'dart:async';
 import 'package:agrivista_field/app/app_shell.dart';
 import 'package:agrivista_field/core/errors/app_failure.dart';
 import 'package:agrivista_field/features/interventions/domain/entities/donnees_interventions.dart';
+import 'package:agrivista_field/features/interventions/domain/entities/compte_rendu_intervention.dart';
 import 'package:agrivista_field/features/interventions/domain/entities/intervention.dart';
 import 'package:agrivista_field/features/interventions/domain/entities/priorite.dart';
 import 'package:agrivista_field/features/interventions/domain/entities/statut_intervention.dart';
 import 'package:agrivista_field/features/interventions/domain/entities/technicien.dart';
 import 'package:agrivista_field/features/interventions/domain/repositories/intervention_repository.dart';
+import 'package:agrivista_field/features/interventions/domain/repositories/compte_rendu_repository.dart';
 import 'package:agrivista_field/features/interventions/domain/usecases/mettre_a_jour_statut.dart';
 import 'package:agrivista_field/features/interventions/domain/usecases/obtenir_interventions.dart';
 import 'package:agrivista_field/features/interventions/presentation/providers/intervention_dependencies.dart';
+import 'package:agrivista_field/features/interventions/presentation/providers/compte_rendu_dependencies.dart';
 import 'package:agrivista_field/features/interventions/presentation/providers/intervention_filters.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -221,6 +224,9 @@ _WidgetContext _mountApp(
       mettreAJourStatutProvider.overrideWithValue(
         MettreAJourStatut(repository),
       ),
+      compteRenduRepositoryProvider.overrideWithValue(
+        const _FakeCompteRenduRepository(),
+      ),
     ],
   );
   final pump = tester.pumpWidget(
@@ -355,4 +361,32 @@ final class _RetryRepository implements InterventionRepository {
     String interventionId,
     StatutIntervention statut,
   ) async {}
+}
+
+final class _FakeCompteRenduRepository implements CompteRenduRepository {
+  const _FakeCompteRenduRepository();
+
+  @override
+  Future<CompteRenduIntervention> lire(String interventionId) async {
+    return CompteRenduIntervention(interventionId: interventionId);
+  }
+
+  @override
+  Future<CompteRenduIntervention> enregistrerNote(
+    String interventionId,
+    String note,
+  ) async {
+    return CompteRenduIntervention(interventionId: interventionId, note: note);
+  }
+
+  @override
+  Future<CompteRenduIntervention> enregistrerPhoto(
+    String interventionId,
+    String sourcePath,
+  ) async {
+    return CompteRenduIntervention(
+      interventionId: interventionId,
+      photoPath: sourcePath,
+    );
+  }
 }
