@@ -2,100 +2,103 @@
 
 ## Présentation
 
-AgriVista Field est une application mobile interne destinée aux techniciens de terrain d’AgriVista, une entreprise corse qui installe et entretient des stations de capteurs pour des exploitations agricoles et viticoles.
+AgriVista est une entreprise corse spécialisée dans l’installation et la maintenance de stations de capteurs connectés destinées aux exploitations agricoles et viticoles.
 
-L’application remplace la consultation papier des interventions de maintenance. Elle charge le planning depuis le JSON fourni par l’équipe pédagogique, permet de rechercher et filtrer les interventions, d’en consulter le détail puis de faire progresser leur statut. Les changements sont conservés localement sur l’appareil.
+AgriVista Field est une application Flutter interne destinée aux techniciens terrain. Elle permet de consulter les interventions provenant d’un JSON distant, de les rechercher, de les filtrer, d’afficher leur détail et de faire évoluer leur statut. Les modifications de statut sont conservées localement avec Hive.
 
 ## Fonctionnalités
 
-- chargement en lecture seule d’un JSON distant avec Dio ;
-- désérialisation en objets typés et validation des données ;
-- liste des interventions avec station, domaine, priorité, statut et date prévue ;
+- chargement en lecture seule du JSON distant ;
+- désérialisation et validation typées ;
+- liste des interventions ;
 - recherche par station, domaine ou description ;
 - filtres par statut et priorité ;
-- détail complet avec localisation, description et historique ;
-- transitions `planifiee → en_cours → terminee` ;
-- persistance locale des statuts avec Hive ;
-- profil dynamique alimenté par le technicien du JSON ;
+- détail complet : station, domaine, localisation, priorité, statut, date, description et historique ;
+- progression `planifiee → en_cours → terminee` ;
+- persistance locale des statuts et conservation après redémarrage ;
 - états loading, data, empty et error distincts ;
-- retry manuel avec le bouton « Réessayer ».
+- rechargement manuel avec le bouton « Réessayer » ;
+- profil dynamique du technicien ;
+- navigation Material 3 entre Interventions et Profil.
 
-L’application n’intègre pas de backend, de synchronisation distante ni de cache complet du JSON.
+## Livrables
 
-## Stack technique
+### Documents de remise
 
-Les versions ci-dessous proviennent de l’environnement de développement et de `pubspec.lock`.
+- [Sujet officiel](docs/25-26_mespr-flutter.pdf) — document PDF fourni par l’équipe pédagogique.
+- [Dossier de conception — PDF](docs/Dossier_conception_AgriVista_Field_Dorian_ARGAILLOT.pdf) — version destinée à la remise.
+- [Dossier technique — PDF](docs/Dossier_technique_AgriVista_Field_Dorian_ARGAILLOT.pdf) — version destinée à la remise.
 
-| Technologie | Version | Rôle |
-|---|---:|---|
-| Flutter | 3.44.8 | Framework mobile et widgets Material 3 |
-| Dart | 3.12.2 | Langage de l’application et du Domain |
-| flutter_riverpod | 3.4.2 | Injection des dépendances et gestion d’état |
-| dio | 5.11.0 | Lecture HTTP du JSON distant |
-| freezed / freezed_annotation | 3.2.5 / 3.1.0 | Définition et génération des DTO immuables |
-| json_serializable / json_annotation | 6.14.1 / 4.12.0 | Génération de la désérialisation JSON |
-| hive_flutter / hive | 1.1.0 / 2.2.3 | Stockage local clé-valeur des statuts |
-| build_runner | 2.15.1 | Exécution des générateurs de code |
-| flutter_lints | 6.0.0 | Règles d’analyse statique |
+### Sources éditables
 
-Ces bibliothèques open source sont distribuées via [pub.dev](https://pub.dev/). Leurs licences respectives sont consultables depuis les pages de chaque package.
+- [Dossier technique — DOCX](docs/Dossier_technique_AgriVista_Field_Dorian_ARGAILLOT.docx).
+- [Dossier technique — Markdown](docs/dossier_technique.md).
 
-## Prérequis
+Les PDF sont les documents destinés à la remise. Les fichiers DOCX et Markdown constituent les sources éditables du dossier technique.
 
-- Flutter 3.44.8 ou une version compatible ;
-- Dart 3.12.2, fourni avec le SDK Flutter utilisé ;
-- Android SDK et un appareil ou émulateur Android ;
-- accès réseau lors du premier chargement des interventions ;
-- macOS et Xcode pour construire et tester la cible iOS.
+## Organisation du projet
 
-La compilation iOS n'a pas pu être exécutée dans l'environnement Windows utilisé pour le développement.
-
-## Installation
-
-Le dépôt configuré pour ce projet est `https://github.com/DorianArg/AgriVistaEXAM`.
-
-```bash
-git clone https://github.com/DorianArg/AgriVistaEXAM.git
-cd AgriVistaEXAM
-flutter pub get
+```text
+.
+├── android/          # cible Android
+├── ios/              # cible iOS
+├── docs/             # sujet et documentation de remise
+├── lib/              # code source Flutter
+├── test/             # tests automatisés
+├── pubspec.yaml      # dépendances et configuration Flutter
+└── README.md         # point d’entrée du repository
 ```
 
-Les fichiers Freezed/json_serializable sont déjà présents dans le dépôt. Pour les régénérer après une modification des DTO :
-
-```bash
-dart run build_runner build --delete-conflicting-outputs
+```text
+lib/
+├── app/
+├── core/
+├── features/
+│   ├── interventions/
+│   │   ├── data/
+│   │   ├── domain/
+│   │   └── presentation/
+│   └── profile/
+└── main.dart
 ```
 
-Lancer ensuite l’application sur un appareil disponible :
+### `lib/app`
 
-```bash
-flutter devices
-flutter run
-```
+Démarrage de l’application, composition technique, navigation et configuration applicative.
 
-## Source JSON
+### `lib/core`
 
-Les données proviennent de :
+Erreurs typées, client réseau, thème, utilitaires et widgets partagés.
 
-`https://utrera.ludovic.aflokkat-projet.fr/getInterventions.json`
+### `features/interventions/domain`
 
-Cette ressource est utilisée uniquement en lecture. L’application ne modifie jamais le JSON et aucun backend n’a été développé. Comme seul le statut modifié est stocké dans Hive, un premier chargement nécessite l’accès au JSON distant.
+Entités, enums, contrat abstrait du repository, use cases et règles métier.
+
+### `features/interventions/data`
+
+Client Dio, RemoteDataSource, stockage Hive, DTO, mappers et implémentation du repository.
+
+### `features/interventions/presentation`
+
+Pages, widgets, providers Riverpod, filtres et états UI.
+
+### `features/profile`
+
+Page et widgets du profil alimentés par le technicien du provider principal.
 
 ## Architecture
 
-Le projet applique une Clean Architecture organisée selon la relation suivante :
+Le projet suit une Clean Architecture :
 
 ```text
 Presentation → Domain ← Data
 ```
 
-- **Domain** : entités, contrat abstrait du repository, use cases et transitions métier. Cette couche reste en Dart pur et ne dépend ni de Flutter, ni de Riverpod, Dio ou Hive.
-- **Data** : source Dio, DTO Freezed/json_serializable, mappers, stockage Hive et implémentation du repository.
-- **Presentation** : pages, widgets Material 3, providers Riverpod, filtres et représentation des états asynchrones.
-- **App** : composition root, injection des implémentations, navigation et constantes globales.
-- **Core** : erreurs typées, client réseau, thème, formateur de date et vues d’état communes.
+- **Domain** : Dart pur, avec les entités, règles métier, repositories abstraits et use cases. Il ne dépend pas de Flutter, Riverpod, Dio ou Hive.
+- **Data** : lecture Dio, JSON, DTO, mapping, Hive et implémentation du repository.
+- **Presentation** : pages et widgets Flutter, Riverpod, `AsyncNotifier`, filtres et gestion loading/data/error.
 
-Le flux d’exécution principal est :
+Flux principal :
 
 ```text
 UI
@@ -109,168 +112,105 @@ Repository
 Data Sources
 ```
 
-## Arborescence simplifiée
+## Stack technique
 
-```text
-lib/
-├── app/
-│   ├── app.dart
-│   ├── app_constants.dart
-│   ├── app_shell.dart
-│   └── bootstrap.dart
-├── core/
-│   ├── errors/
-│   ├── network/
-│   ├── theme/
-│   ├── utils/
-│   └── widgets/
-├── features/
-│   ├── interventions/
-│   │   ├── data/
-│   │   │   ├── datasources/
-│   │   │   ├── mappers/
-│   │   │   ├── models/
-│   │   │   └── repositories/
-│   │   ├── domain/
-│   │   │   ├── entities/
-│   │   │   ├── repositories/
-│   │   │   └── usecases/
-│   │   └── presentation/
-│   │       ├── pages/
-│   │       ├── providers/
-│   │       └── widgets/
-│   └── profile/
-│       └── presentation/
-│           ├── pages/
-│           └── widgets/
-└── main.dart
-```
+Versions relevées dans l’environnement Flutter et `pubspec.lock` :
 
-## Gestion d’état avec Riverpod
+| Technologie | Version | Rôle |
+|---|---:|---|
+| Flutter | 3.44.8 | framework mobile et Material 3 |
+| Dart | 3.12.2 | langage de l’application |
+| flutter_riverpod | 3.4.2 | gestion d’état et injection de dépendances |
+| dio | 5.11.0 | lecture HTTP du JSON |
+| freezed / freezed_annotation | 3.2.5 / 3.1.0 | DTO immuables et génération de code |
+| json_serializable / json_annotation | 6.14.1 / 4.12.0 | désérialisation typée |
+| hive_flutter / hive | 1.1.0 / 2.2.3 | persistance locale des statuts |
 
-- des `Provider` exposent le repository et les use cases ;
-- `interventionsProvider`, basé sur `AsyncNotifier`, porte l’unique état métier partagé de la liste et du profil ;
-- `AsyncValue` représente explicitement loading, data et error ;
-- un `Notifier` séparé conserve les critères de recherche et de filtres ;
-- `ref.watch` reconstruit l’interface lorsque l’état change ;
-- `ref.read` déclenche le retry ou la progression du statut.
+## Installation
 
-Le retry automatique Riverpod est désactivé : seul le bouton « Réessayer » relance le chargement.
-
-## Chargement et validation du JSON
-
-```text
-Dio
- ↓
-RemoteDataSource
- ↓
-DTO Freezed/json_serializable
- ↓
-Mapper
- ↓
-Entités Domain
-```
-
-Le mapper convertit notamment `en_cours` en `StatutIntervention.enCours` et les dates ISO en `DateTime`. Les champs obligatoires, valeurs d’énumération, dates et coordonnées sont validés. Une réponse incohérente produit une `DataParsingFailure` ; aucune liste partiellement corrompue n’est affichée.
-
-## Persistance locale
-
-Hive utilise la box `intervention_statuses` avec la structure suivante :
-
-```text
-interventionId → statut
-```
-
-Au chargement, le repository fusionne les interventions du JSON avec les éventuelles surcharges Hive. Le JSON reste la référence de la liste : une clé Hive devenue inconnue ne crée aucune intervention fictive.
-
-Seul le statut est persisté. Le contenu JSON complet et l’historique distant ne sont ni copiés ni enrichis localement.
-
-## Modification du statut
-
-La règle métier se trouve dans le Domain :
-
-```text
-planifiee → en_cours → terminee
-```
-
-L’ordre d’une mise à jour est le suivant :
-
-1. validation de la transition par le use case ;
-2. écriture du nouveau statut dans Hive ;
-3. attente de la réussite de l’écriture ;
-4. mise à jour de l’état Riverpod ;
-5. reconstruction automatique de la liste et du détail.
-
-Si Hive échoue, l’ancien statut est conservé et l’utilisateur reçoit un message d’erreur. L’interface n’affiche pas de réussite anticipée.
-
-## Gestion des erreurs
-
-Les erreurs techniques sont converties en Failure typées :
-
-- `NetworkFailure` ;
-- `RequestTimeoutFailure` ;
-- `HttpFailure` ;
-- `DataParsingFailure` ;
-- `LocalStorageFailure` ;
-- `InvalidStatusTransitionFailure` ;
-- `UnknownFailure`.
-
-La Presentation transforme ces types en messages compréhensibles. Les exceptions Dio ou Hive ne sont jamais affichées directement.
-
-## Tests et qualité
-
-Exécuter les contrôles avec :
+Prérequis : Flutter, Dart, Android SDK et un appareil ou émulateur Android. macOS avec Xcode est nécessaire pour compiler la cible iOS.
 
 ```bash
-dart format .
+git clone https://github.com/DorianArg/AgriVistaEXAM.git
+cd AgriVistaEXAM
+flutter pub get
+```
+
+Les fichiers générés sont déjà versionnés. Après modification des DTO, les régénérer avec :
+
+```bash
+dart run build_runner build
+```
+
+## Lancement et validation
+
+```bash
+flutter pub get
 flutter analyze
 flutter test
+flutter run
+```
+
+Construire l’APK Android debug :
+
+```bash
 flutter build apk --debug
 ```
 
-La validation finale compte **86 tests réussis**. Ils couvrent le parsing, le mapping, les règles Domain, les transitions, Dio, les erreurs réseau, Hive, la fusion distant/local, Riverpod, le retry manuel, les filtres, le détail, le profil et la navigation. Aucun pourcentage de couverture n’est annoncé.
+Le projet a été testé sur un appareil Android réel Samsung SM S926U sous Android 16.
 
-### Tests automatisés
+## Source des données
 
-Les tests utilisent des fakes, un adaptateur Dio contrôlé et des répertoires Hive temporaires. Ils ne dépendent ni du serveur réel, ni du stockage de l’utilisateur, ni de leur ordre d’exécution.
+`https://utrera.ludovic.aflokkat-projet.fr/getInterventions.json`
 
-### Validation manuelle
+- requête HTTP GET ;
+- source distante en lecture seule et jamais modifiée ;
+- aucun backend à installer ;
+- aucune configuration Firebase ou Supabase ;
+- connexion réseau nécessaire pour charger les interventions ;
+- changements de statut enregistrés uniquement en local.
 
-Le parcours de recette à consigner par le développeur comprend :
+## Persistance locale
 
-- lancement Android et affichage de la liste réelle ;
-- recherche et filtres de statut/priorité ;
-- ouverture du détail et retour liste ;
-- progression du statut ;
-- accès au profil ;
-- fermeture puis relance pour vérifier la persistance ;
-- contrôle visuel de l’absence d’overflow.
+Hive conserve uniquement les changements de statut dans la box `intervention_statuses` :
 
-Le lancement technique a été confirmé sur un Samsung SM S926U sous Android 16. Les interactions tactiles et la validation visuelle restent sous la responsabilité du développeur et ne sont pas attribuées à Codex.
+```text
+JSON distant + statuts locaux Hive → données affichées
+```
+
+Le JSON reste la référence initiale et Hive surcharge seulement le statut. Il n’existe aucun cache complet du JSON et l’historique distant n’est pas modifié.
+
+## État du projet
+
+- périmètre fonctionnel obligatoire terminé ;
+- Android testé sur appareil réel ;
+- 86 tests automatisés réussis ;
+- `flutter analyze` sans anomalie ;
+- APK debug construit ;
+- persistance après fermeture complète et relance vérifiée manuellement par le développeur ;
+- projet iOS généré.
+
+Le projet iOS est généré et conservé dans le repository. Sa compilation n'a pas été exécutée dans l'environnement Windows utilisé pour le développement et nécessite macOS avec Xcode.
+
+## Tests
+
+La suite compte **86 tests automatisés réussis**. Elle couvre : Domain, transitions de statut, parsing, mapping, JSON invalide, erreurs réseau, Hive, fusion distant/local, Riverpod, retry, recherche, filtres, détail, profil et navigation.
+
+Aucun pourcentage de couverture n’est annoncé.
+
+### Validation manuelle Android
+
+La recette Android a été réalisée manuellement sur appareil réel par le développeur. Elle couvre l’affichage de la liste, la recherche, les filtres, le détail, le changement de statut, le retour liste, le profil, la persistance après fermeture complète et relance, ainsi que l’absence d’overflow visible.
+
+Aucune validation manuelle iOS n’est déclarée.
 
 ## Limites
 
-- aucun cache complet du JSON ;
 - premier chargement dépendant du réseau ;
-- aucune synchronisation avec un serveur ;
-- historique distant non enrichi localement ;
+- pas de cache complet offline-first ;
+- aucune synchronisation serveur ou résolution de conflit ;
+- historique non enrichi localement ;
 - compilation iOS non exécutée sous Windows ;
-- aucune fonctionnalité optionnelle du sujet ajoutée.
+- fonctionnalités bonus non développées.
 
-## Améliorations futures
-
-- cache local complet et mode hors ligne ;
-- synchronisation serveur et résolution de conflits ;
-- photos et notes d’intervention ;
-- cartographie des stations ;
-- tableau de bord ;
-- authentification ;
-- mise en page tablette spécialisée ;
-- thème sombre.
-
-Ces éléments sont uniquement des pistes d’évolution et ne font pas partie de la version livrée.
-
-## Documentation
-
-- le sujet officiel et le dossier de conception sont conservés dans `docs/` ;
-- la source Markdown du dossier technique se trouve dans [`docs/dossier_technique.md`](docs/dossier_technique.md).
+Les documents complets sont accessibles dans la section Livrables : [dossier de conception](docs/Dossier_conception_AgriVista_Field_Dorian_ARGAILLOT.pdf) et [dossier technique](docs/Dossier_technique_AgriVista_Field_Dorian_ARGAILLOT.pdf). La source détaillée du dossier technique reste également disponible en [Markdown](docs/dossier_technique.md).
