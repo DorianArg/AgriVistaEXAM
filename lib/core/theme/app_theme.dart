@@ -2,14 +2,20 @@ import 'package:flutter/material.dart';
 
 abstract final class AppTheme {
   static const _seedColor = Color(0xFF1C9CB0);
-  static const _surfaceColor = Color(0xFFF8FAFA);
 
-  static ThemeData get light {
+  static ThemeData get light => _build(Brightness.light);
+
+  static ThemeData get dark => _build(Brightness.dark);
+
+  static ThemeData _build(Brightness brightness) {
     final colorScheme = ColorScheme.fromSeed(
       seedColor: _seedColor,
-      brightness: Brightness.light,
+      brightness: brightness,
     );
-    final baseTextTheme = Typography.material2021().black;
+    final typography = Typography.material2021();
+    final baseTextTheme = brightness == Brightness.light
+        ? typography.black
+        : typography.white;
 
     return ThemeData(
       useMaterial3: true,
@@ -22,7 +28,7 @@ abstract final class AppTheme {
           fontWeight: FontWeight.w700,
         ),
       ),
-      scaffoldBackgroundColor: _surfaceColor,
+      scaffoldBackgroundColor: colorScheme.surface,
       appBarTheme: AppBarTheme(
         centerTitle: true,
         backgroundColor: colorScheme.primary,

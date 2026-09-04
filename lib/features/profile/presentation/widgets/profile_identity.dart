@@ -3,10 +3,17 @@ import 'package:agrivista_field/features/interventions/domain/entities/technicie
 import 'package:flutter/material.dart';
 
 final class ProfileIdentity extends StatelessWidget {
-  const ProfileIdentity({required this.technicien, super.key});
+  const ProfileIdentity({
+    required this.technicien,
+    this.isTablet = false,
+    this.footer,
+    super.key,
+  });
 
   static const _role = 'Technicienne terrain';
   final Technicien technicien;
+  final bool isTablet;
+  final Widget? footer;
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +24,13 @@ final class ProfileIdentity extends StatelessWidget {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 600),
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 28, 20, 32),
+          key: Key(isTablet ? 'profile-tablet-layout' : 'profile-phone-layout'),
+          padding: EdgeInsets.fromLTRB(
+            isTablet ? 32 : 20,
+            isTablet ? 36 : 28,
+            isTablet ? 32 : 20,
+            32,
+          ),
           children: [
             Center(
               child: Semantics(
@@ -93,6 +106,7 @@ final class ProfileIdentity extends StatelessWidget {
                 subtitle: const Text('Application de suivi des interventions'),
               ),
             ),
+            if (footer != null) ...[const SizedBox(height: 16), footer!],
           ],
         ),
       ),

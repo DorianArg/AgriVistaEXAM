@@ -19,6 +19,10 @@ void main() {
   testWidgets('navigue entre le dashboard, la liste, le profil et le détail', (
     tester,
   ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
     final repository = _FakeRepository(_data());
     await tester.pumpWidget(
       ProviderScope(

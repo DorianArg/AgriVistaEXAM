@@ -3,23 +3,99 @@ import 'package:agrivista_field/features/interventions/domain/entities/intervent
 import 'package:agrivista_field/core/widgets/async_state_views.dart';
 import 'package:agrivista_field/features/interventions/presentation/providers/intervention_filters.dart';
 import 'package:agrivista_field/features/interventions/presentation/providers/interventions_provider.dart';
+import 'package:agrivista_field/features/interventions/presentation/pages/intervention_detail_page.dart';
 import 'package:agrivista_field/features/interventions/presentation/widgets/intervention_card.dart';
 import 'package:agrivista_field/features/interventions/presentation/widgets/intervention_filters_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final class InterventionsPage extends ConsumerWidget {
-  const InterventionsPage({this.onInterventionSelected, super.key});
+final class InterventionsPage extends ConsumerStatefulWidget {
+  const InterventionsPage({
+    this.onInterventionSelected,
+    this.masterDetail = false,
+    super.key,
+  });
 
   final ValueChanged<Intervention>? onInterventionSelected;
+  final bool masterDetail;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<InterventionsPage> createState() => _InterventionsPageState();
+}
+
+final class _InterventionsPageState extends ConsumerState<InterventionsPage> {
+  String? _selectedInterventionId;
+
+  @override
+  Widget build(BuildContext context) {
+    final state = ref.watch(interventionsProvider);
+    if (widget.masterDetail) {
+      return state.when(
+        loading: () =>
+            const AppLoadingView(message: 'Chargement des interventions…'),
+        error: (error, _) => AppErrorView(
+          error: error,
+          onRetry: () => ref.read(interventionsProvider.notifier).recharger(),
+        ),
+        data: (data) => _buildMasterDetail(context, ref, data),
+      );
+    }
+
     return InterventionsView(
-      state: ref.watch(interventionsProvider),
+      state: state,
       onRetry: () => ref.read(interventionsProvider.notifier).recharger(),
       onRefresh: () => _refresh(context, ref),
-      onInterventionSelected: onInterventionSelected,
+      onInterventionSelected: widget.onInterventionSelected,
+    );
+  }
+
+  Widget _buildMasterDetail(
+    BuildContext context,
+    WidgetRef ref,
+    DonneesInterventions data,
+  ) {
+    final filters = ref.watch(interventionFiltersProvider);
+    final visibleInterventions = filtrerInterventions(
+      data.interventions,
+      filters,
+    );
+    final selectedId =
+        visibleInterventions.any((item) => item.id == _selectedInterventionId)
+        ? _selectedInterventionId
+        : visibleInterventions.firstOrNull?.id;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final listWidth = (constraints.maxWidth * .4).clamp(340.0, 480.0);
+        return Row(
+          key: const Key('interventions-master-detail'),
+          children: [
+            SizedBox(
+              width: listWidth,
+              child: _InterventionsDataView(
+                data: data,
+                onRefresh: () => _refresh(context, ref),
+                selectedInterventionId: selectedId,
+                onInterventionSelected: (intervention) {
+                  setState(() => _selectedInterventionId = intervention.id);
+                },
+              ),
+            ),
+            const VerticalDivider(width: 1),
+            Expanded(
+              child: selectedId == null
+                  ? const AppEmptyView(
+                      message: 'Sélectionnez une intervention.',
+                    )
+                  : InterventionDetailPage(
+                      key: ValueKey('tablet-detail-$selectedId'),
+                      interventionId: selectedId,
+                      embedded: true,
+                    ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -71,11 +147,13 @@ final class _InterventionsDataView extends ConsumerWidget {
     required this.data,
     this.onRefresh,
     this.onInterventionSelected,
+    this.selectedInterventionId,
   });
 
   final DonneesInterventions data;
   final RefreshCallback? onRefresh;
   final ValueChanged<Intervention>? onInterventionSelected;
+  final String? selectedInterventionId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -125,6 +203,7 @@ final class _InterventionsDataView extends ConsumerWidget {
                         final intervention = interventions[index];
                         return InterventionCard(
                           intervention: intervention,
+                          selected: intervention.id == selectedInterventionId,
                           onTap: onInterventionSelected == null
                               ? null
                               : () => onInterventionSelected!(intervention),

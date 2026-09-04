@@ -8,6 +8,7 @@ final class DashboardContent extends StatelessWidget {
     required this.technicienNom,
     required this.onStatusSelected,
     required this.onPrioritySelected,
+    this.isTablet = false,
     super.key,
   });
 
@@ -15,6 +16,7 @@ final class DashboardContent extends StatelessWidget {
   final String technicienNom;
   final ValueChanged<StatutFilter> onStatusSelected;
   final ValueChanged<PrioriteFilter> onPrioritySelected;
+  final bool isTablet;
 
   @override
   Widget build(BuildContext context) {
@@ -22,102 +24,152 @@ final class DashboardContent extends StatelessWidget {
     final colors = theme.colorScheme;
     final prenom = prenomTechnicien(technicienNom);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            prenom.isEmpty ? 'Bonjour' : 'Bonjour $prenom',
-            style: theme.textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 20),
-          _TotalCard(total: summary.total),
-          const SizedBox(height: 24),
-          Text('Par statut', style: theme.textTheme.titleLarge),
-          const SizedBox(height: 12),
-          _MetricsWrap(
-            children: [
-              _MetricCard(
-                key: const Key('dashboard-planifiees'),
-                value: summary.planifiees,
-                label: 'Planifiées',
-                icon: Icons.schedule_outlined,
-                background: colors.primaryContainer,
-                foreground: colors.onPrimaryContainer,
-                onTap: () => onStatusSelected(StatutFilter.planifiee),
-              ),
-              _MetricCard(
-                key: const Key('dashboard-en-cours'),
-                value: summary.enCours,
-                label: 'En cours',
-                icon: Icons.play_circle_outline,
-                background: colors.tertiaryContainer,
-                foreground: colors.onTertiaryContainer,
-                onTap: () => onStatusSelected(StatutFilter.enCours),
-              ),
-              _MetricCard(
-                key: const Key('dashboard-terminees'),
-                value: summary.terminees,
-                label: 'Terminées',
-                icon: Icons.check_circle_outline,
-                background: colors.secondaryContainer,
-                foreground: colors.onSecondaryContainer,
-                onTap: () => onStatusSelected(StatutFilter.terminee),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Text('Par priorité', style: theme.textTheme.titleLarge),
-          const SizedBox(height: 12),
-          _MetricsWrap(
-            children: [
-              _MetricCard(
-                key: const Key('dashboard-priorite-haute'),
-                value: summary.prioriteHaute,
-                label: 'Haute',
-                icon: Icons.priority_high,
-                background: colors.errorContainer,
-                foreground: colors.onErrorContainer,
-                onTap: () => onPrioritySelected(PrioriteFilter.haute),
-              ),
-              _MetricCard(
-                key: const Key('dashboard-priorite-moyenne'),
-                value: summary.prioriteMoyenne,
-                label: 'Moyenne',
-                icon: Icons.remove,
-                background: colors.tertiaryContainer,
-                foreground: colors.onTertiaryContainer,
-                onTap: () => onPrioritySelected(PrioriteFilter.moyenne),
-              ),
-              _MetricCard(
-                key: const Key('dashboard-priorite-basse'),
-                value: summary.prioriteBasse,
-                label: 'Basse',
-                icon: Icons.keyboard_arrow_down,
-                background: colors.secondaryContainer,
-                foreground: colors.onSecondaryContainer,
-                onTap: () => onPrioritySelected(PrioriteFilter.basse),
-              ),
-            ],
-          ),
-          if (summary.total == 0) ...[
-            const SizedBox(height: 24),
-            const Card(
-              child: Padding(
-                padding: EdgeInsets.all(24),
-                child: Row(
-                  children: [
-                    Icon(Icons.assignment_outlined),
-                    SizedBox(width: 12),
-                    Expanded(child: Text('Aucune intervention disponible.')),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ],
+    final statusCards = [
+      _MetricCard(
+        key: const Key('dashboard-planifiees'),
+        value: summary.planifiees,
+        label: 'Planifiées',
+        icon: Icons.schedule_outlined,
+        background: colors.primaryContainer,
+        foreground: colors.onPrimaryContainer,
+        onTap: () => onStatusSelected(StatutFilter.planifiee),
       ),
+      _MetricCard(
+        key: const Key('dashboard-en-cours'),
+        value: summary.enCours,
+        label: 'En cours',
+        icon: Icons.play_circle_outline,
+        background: colors.tertiaryContainer,
+        foreground: colors.onTertiaryContainer,
+        onTap: () => onStatusSelected(StatutFilter.enCours),
+      ),
+      _MetricCard(
+        key: const Key('dashboard-terminees'),
+        value: summary.terminees,
+        label: 'Terminées',
+        icon: Icons.check_circle_outline,
+        background: colors.secondaryContainer,
+        foreground: colors.onSecondaryContainer,
+        onTap: () => onStatusSelected(StatutFilter.terminee),
+      ),
+    ];
+    final priorityCards = [
+      _MetricCard(
+        key: const Key('dashboard-priorite-haute'),
+        value: summary.prioriteHaute,
+        label: 'Haute',
+        icon: Icons.priority_high,
+        background: colors.errorContainer,
+        foreground: colors.onErrorContainer,
+        onTap: () => onPrioritySelected(PrioriteFilter.haute),
+      ),
+      _MetricCard(
+        key: const Key('dashboard-priorite-moyenne'),
+        value: summary.prioriteMoyenne,
+        label: 'Moyenne',
+        icon: Icons.remove,
+        background: colors.tertiaryContainer,
+        foreground: colors.onTertiaryContainer,
+        onTap: () => onPrioritySelected(PrioriteFilter.moyenne),
+      ),
+      _MetricCard(
+        key: const Key('dashboard-priorite-basse'),
+        value: summary.prioriteBasse,
+        label: 'Basse',
+        icon: Icons.keyboard_arrow_down,
+        background: colors.secondaryContainer,
+        foreground: colors.onSecondaryContainer,
+        onTap: () => onPrioritySelected(PrioriteFilter.basse),
+      ),
+    ];
+
+    return SingleChildScrollView(
+      padding: EdgeInsets.fromLTRB(
+        isTablet ? 32 : 16,
+        20,
+        isTablet ? 32 : 16,
+        24,
+      ),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1100),
+          child: Column(
+            key: Key(
+              isTablet ? 'dashboard-tablet-layout' : 'dashboard-phone-layout',
+            ),
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                prenom.isEmpty ? 'Bonjour' : 'Bonjour $prenom',
+                style: theme.textTheme.headlineSmall,
+              ),
+              const SizedBox(height: 20),
+              _TotalCard(total: summary.total),
+              const SizedBox(height: 24),
+              if (isTablet)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: _MetricSection(
+                        title: 'Par statut',
+                        children: statusCards,
+                      ),
+                    ),
+                    const SizedBox(width: 24),
+                    Expanded(
+                      child: _MetricSection(
+                        title: 'Par priorité',
+                        children: priorityCards,
+                      ),
+                    ),
+                  ],
+                )
+              else ...[
+                _MetricSection(title: 'Par statut', children: statusCards),
+                const SizedBox(height: 24),
+                _MetricSection(title: 'Par priorité', children: priorityCards),
+              ],
+              if (summary.total == 0) ...[
+                const SizedBox(height: 24),
+                const Card(
+                  child: Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Row(
+                      children: [
+                        Icon(Icons.assignment_outlined),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: Text('Aucune intervention disponible.'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+final class _MetricSection extends StatelessWidget {
+  const _MetricSection({required this.title, required this.children});
+
+  final String title;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: Theme.of(context).textTheme.titleLarge),
+        const SizedBox(height: 12),
+        _MetricsWrap(children: children),
+      ],
     );
   }
 }

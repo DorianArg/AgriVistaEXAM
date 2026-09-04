@@ -4,10 +4,16 @@ import 'package:agrivista_field/features/interventions/presentation/widgets/inte
 import 'package:flutter/material.dart';
 
 final class InterventionCard extends StatelessWidget {
-  const InterventionCard({required this.intervention, this.onTap, super.key});
+  const InterventionCard({
+    required this.intervention,
+    this.onTap,
+    this.selected = false,
+    super.key,
+  });
 
   final Intervention intervention;
   final VoidCallback? onTap;
+  final bool selected;
 
   @override
   Widget build(BuildContext context) {
@@ -15,6 +21,7 @@ final class InterventionCard extends StatelessWidget {
 
     return Card(
       margin: EdgeInsets.zero,
+      color: selected ? theme.colorScheme.secondaryContainer : null,
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,

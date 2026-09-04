@@ -10,11 +10,13 @@ final class DashboardPage extends ConsumerWidget {
   const DashboardPage({
     required this.onStatusSelected,
     required this.onPrioritySelected,
+    this.isTablet = false,
     super.key,
   });
 
   final ValueChanged<StatutFilter> onStatusSelected;
   final ValueChanged<PrioriteFilter> onPrioritySelected;
+  final bool isTablet;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -37,6 +39,7 @@ final class DashboardPage extends ConsumerWidget {
           technicienNom: technicien.nom,
           onStatusSelected: onStatusSelected,
           onPrioritySelected: onPrioritySelected,
+          isTablet: isTablet,
         );
       },
     );

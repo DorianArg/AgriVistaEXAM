@@ -1,6 +1,8 @@
 import 'package:agrivista_field/app/app.dart';
 import 'package:agrivista_field/core/errors/app_failure.dart';
 import 'package:agrivista_field/core/network/dio_client.dart';
+import 'package:agrivista_field/core/theme/theme_mode_provider.dart';
+import 'package:agrivista_field/core/theme/theme_preference_repository.dart';
 import 'package:agrivista_field/features/interventions/data/datasources/intervention_local_data_source.dart';
 import 'package:agrivista_field/features/interventions/data/datasources/compte_rendu_local_data_source.dart';
 import 'package:agrivista_field/features/interventions/data/datasources/intervention_photo_picker.dart';
@@ -38,13 +40,23 @@ Future<void> bootstrap() async {
         interventionPhotoPickerProvider.overrideWithValue(
           ImagePickerInterventionPhotoPicker(ImagePicker()),
         ),
+        themePreferenceRepositoryProvider.overrideWithValue(
+          HiveThemePreferenceRepository(boxes.preferences),
+        ),
       ],
       child: const AgriVistaApp(),
     ),
   );
 }
 
-Future<({Box<String> statuses, Box<String> notes, Box<String> photos})>
+Future<
+  ({
+    Box<String> statuses,
+    Box<String> notes,
+    Box<String> photos,
+    Box<String> preferences,
+  })
+>
 _initializeLocalBoxes() async {
   try {
     await Hive.initFlutter();
@@ -53,7 +65,15 @@ _initializeLocalBoxes() async {
     );
     final notes = await Hive.openBox<String>(CompteRenduStorage.notesBoxName);
     final photos = await Hive.openBox<String>(CompteRenduStorage.photosBoxName);
-    return (statuses: statuses, notes: notes, photos: photos);
+    final preferences = await Hive.openBox<String>(
+      ThemePreferenceStorage.boxName,
+    );
+    return (
+      statuses: statuses,
+      notes: notes,
+      photos: photos,
+      preferences: preferences,
+    );
   } catch (_) {
     throw const LocalStorageFailure(
       'Impossible d’initialiser le stockage local.',

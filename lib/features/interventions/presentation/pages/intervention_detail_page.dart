@@ -10,9 +10,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final class InterventionDetailPage extends ConsumerStatefulWidget {
-  const InterventionDetailPage({required this.interventionId, super.key});
+  const InterventionDetailPage({
+    required this.interventionId,
+    this.embedded = false,
+    super.key,
+  });
 
   final String interventionId;
+  final bool embedded;
 
   @override
   ConsumerState<InterventionDetailPage> createState() =>
@@ -27,29 +32,39 @@ final class _InterventionDetailPageState
   Widget build(BuildContext context) {
     final interventionsState = ref.watch(interventionsProvider);
 
+    final content = interventionsState.when(
+      loading: () =>
+          const AppLoadingView(message: 'Chargement de l’intervention…'),
+      error: (error, _) => AppErrorView(
+        error: error,
+        onRetry: () => ref.read(interventionsProvider.notifier).recharger(),
+      ),
+      data: (data) {
+        final intervention = _findIntervention(data.interventions);
+        if (intervention == null) {
+          return const AppEmptyView(
+            message: 'Cette intervention est introuvable.',
+          );
+        }
+        return _DetailContent(
+          intervention: intervention,
+          isUpdating: _isUpdating,
+          onUpdateStatus: () => _updateStatus(intervention.id),
+        );
+      },
+    );
+
+    if (widget.embedded) {
+      return ColoredBox(
+        key: const Key('tablet-intervention-detail'),
+        color: Theme.of(context).colorScheme.surface,
+        child: content,
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(title: const Text('Détail intervention')),
-      body: interventionsState.when(
-        loading: () =>
-            const AppLoadingView(message: 'Chargement de l’intervention…'),
-        error: (error, _) => AppErrorView(
-          error: error,
-          onRetry: () => ref.read(interventionsProvider.notifier).recharger(),
-        ),
-        data: (data) {
-          final intervention = _findIntervention(data.interventions);
-          if (intervention == null) {
-            return const AppEmptyView(
-              message: 'Cette intervention est introuvable.',
-            );
-          }
-          return _DetailContent(
-            intervention: intervention,
-            isUpdating: _isUpdating,
-            onUpdateStatus: () => _updateStatus(intervention.id),
-          );
-        },
-      ),
+      body: content,
     );
   }
 
