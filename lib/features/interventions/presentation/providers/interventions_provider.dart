@@ -15,11 +15,22 @@ final class InterventionsNotifier extends AsyncNotifier<DonneesInterventions> {
     return ref.watch(obtenirInterventionsProvider)();
   }
 
-  Future<void> recharger() async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(
-      () => ref.read(obtenirInterventionsProvider)(),
-    );
+  Future<bool> recharger() async {
+    final donneesActuelles = state.value;
+    if (donneesActuelles == null) {
+      state = const AsyncLoading();
+    }
+
+    try {
+      final nouvellesDonnees = await ref.read(obtenirInterventionsProvider)();
+      state = AsyncData(nouvellesDonnees);
+      return true;
+    } catch (error, stackTrace) {
+      state = donneesActuelles == null
+          ? AsyncError(error, stackTrace)
+          : AsyncData(donneesActuelles);
+      return false;
+    }
   }
 
   Future<StatutIntervention> mettreAJourStatut(String interventionId) async {

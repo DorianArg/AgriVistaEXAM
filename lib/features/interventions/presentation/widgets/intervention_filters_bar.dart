@@ -72,6 +72,50 @@ final class _InterventionFiltersBarState
           labelFor: (value) => value.label,
           onSelected: notifier.filtrerParPriorite,
         ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            const Icon(Icons.sort, size: 20),
+            const SizedBox(width: 8),
+            Text('Tri :', style: Theme.of(context).textTheme.labelLarge),
+            const SizedBox(width: 4),
+            PopupMenuButton<InterventionSort>(
+              key: const Key('intervention-sort-menu'),
+              initialValue: filters.tri,
+              tooltip: 'Choisir le critère de tri',
+              onSelected: notifier.trierPar,
+              itemBuilder: (_) => [
+                for (final sort in InterventionSort.values)
+                  PopupMenuItem(value: sort, child: Text(sort.label)),
+              ],
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 10,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(filters.tri.label),
+                    const SizedBox(width: 4),
+                    const Icon(Icons.arrow_drop_down),
+                  ],
+                ),
+              ),
+            ),
+            const Spacer(),
+            IconButton(
+              key: const Key('intervention-sort-direction'),
+              tooltip: 'Ordre ${filters.direction.label.toLowerCase()}',
+              onPressed: notifier.inverserOrdre,
+              icon: Icon(
+                filters.direction == SortDirection.ascending
+                    ? Icons.arrow_upward
+                    : Icons.arrow_downward,
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }

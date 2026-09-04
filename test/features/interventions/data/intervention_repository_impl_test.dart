@@ -83,6 +83,30 @@ void main() {
       );
     });
 
+    test(
+      'préserve la surcharge locale après un nouveau chargement distant',
+      () async {
+        final repository = InterventionRepositoryImpl(
+          _SequencedRemoteDataSource([
+            _response([_intervention('itv-1', 'planifiee')]),
+            _response([_intervention('itv-1', 'terminee')]),
+          ]),
+          const _FakeLocalDataSource(
+            overrides: {'itv-1': StatutIntervention.enCours},
+          ),
+        );
+
+        final initial = await repository.recupererDonneesInitiales();
+        final refreshed = await repository.recupererDonneesInitiales();
+
+        expect(initial.interventions.single.statut, StatutIntervention.enCours);
+        expect(
+          refreshed.interventions.single.statut,
+          StatutIntervention.enCours,
+        );
+      },
+    );
+
     test('propage une erreur de lecture locale au chargement global', () {
       final repository = _repository(
         response: _response([_intervention('itv-1', 'planifiee')]),
@@ -139,6 +163,18 @@ final class _FakeRemoteDataSource implements InterventionRemoteDataSource {
 
   @override
   Future<AgriVistaResponseDto> recupererDonnees() async => response;
+}
+
+final class _SequencedRemoteDataSource implements InterventionRemoteDataSource {
+  _SequencedRemoteDataSource(this.responses);
+
+  final List<AgriVistaResponseDto> responses;
+  int readCount = 0;
+
+  @override
+  Future<AgriVistaResponseDto> recupererDonnees() async {
+    return responses[readCount++];
+  }
 }
 
 final class _FakeLocalDataSource implements InterventionLocalDataSource {

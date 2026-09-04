@@ -18,8 +18,22 @@ final class InterventionsPage extends ConsumerWidget {
     return InterventionsView(
       state: ref.watch(interventionsProvider),
       onRetry: () => ref.read(interventionsProvider.notifier).recharger(),
+      onRefresh: () => _refresh(context, ref),
       onInterventionSelected: onInterventionSelected,
     );
+  }
+
+  Future<void> _refresh(BuildContext context, WidgetRef ref) async {
+    final succeeded = await ref
+        .read(interventionsProvider.notifier)
+        .recharger();
+    if (!succeeded && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Impossible d’actualiser les interventions.'),
+        ),
+      );
+    }
   }
 }
 
@@ -27,12 +41,14 @@ final class InterventionsView extends StatelessWidget {
   const InterventionsView({
     required this.state,
     required this.onRetry,
+    this.onRefresh,
     this.onInterventionSelected,
     super.key,
   });
 
   final AsyncValue<DonneesInterventions> state;
   final VoidCallback onRetry;
+  final RefreshCallback? onRefresh;
   final ValueChanged<Intervention>? onInterventionSelected;
 
   @override
@@ -43,6 +59,7 @@ final class InterventionsView extends StatelessWidget {
       error: (error, _) => AppErrorView(error: error, onRetry: onRetry),
       data: (data) => _InterventionsDataView(
         data: data,
+        onRefresh: onRefresh,
         onInterventionSelected: onInterventionSelected,
       ),
     );
@@ -52,10 +69,12 @@ final class InterventionsView extends StatelessWidget {
 final class _InterventionsDataView extends ConsumerWidget {
   const _InterventionsDataView({
     required this.data,
+    this.onRefresh,
     this.onInterventionSelected,
   });
 
   final DonneesInterventions data;
+  final RefreshCallback? onRefresh;
   final ValueChanged<Intervention>? onInterventionSelected;
 
   @override
@@ -79,28 +98,40 @@ final class _InterventionsDataView extends ConsumerWidget {
           ),
           const SizedBox(height: 12),
           Expanded(
-            child: interventions.isEmpty
-                ? AppEmptyView(
-                    message: data.interventions.isEmpty
-                        ? 'Aucune intervention disponible.'
-                        : 'Aucune intervention ne correspond à votre recherche.',
-                  )
-                : ListView.separated(
-                    keyboardDismissBehavior:
-                        ScrollViewKeyboardDismissBehavior.onDrag,
-                    padding: const EdgeInsets.only(bottom: 16),
-                    itemCount: interventions.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      final intervention = interventions[index];
-                      return InterventionCard(
-                        intervention: intervention,
-                        onTap: onInterventionSelected == null
-                            ? null
-                            : () => onInterventionSelected!(intervention),
-                      );
-                    },
-                  ),
+            child: RefreshIndicator(
+              onRefresh: onRefresh ?? () async {},
+              child: interventions.isEmpty
+                  ? ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: [
+                        SizedBox(
+                          height: 240,
+                          child: AppEmptyView(
+                            message: data.interventions.isEmpty
+                                ? 'Aucune intervention disponible.'
+                                : 'Aucune intervention ne correspond à votre recherche.',
+                          ),
+                        ),
+                      ],
+                    )
+                  : ListView.separated(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.onDrag,
+                      padding: const EdgeInsets.only(bottom: 16),
+                      itemCount: interventions.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 12),
+                      itemBuilder: (context, index) {
+                        final intervention = interventions[index];
+                        return InterventionCard(
+                          intervention: intervention,
+                          onTap: onInterventionSelected == null
+                              ? null
+                              : () => onInterventionSelected!(intervention),
+                        );
+                      },
+                    ),
+            ),
           ),
         ],
       ),

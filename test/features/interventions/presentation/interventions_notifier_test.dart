@@ -128,6 +128,108 @@ void main() {
     expect(container.read(interventionsProvider).requireValue, repository.data);
     expect(repository.readCount, 2);
   });
+
+  test(
+    'refresh conserve les données visibles puis expose les nouvelles',
+    () async {
+      final initialData = _data(StatutIntervention.planifiee);
+      final refreshedData = _data(StatutIntervention.terminee);
+      final repository = _RefreshRepository(initialData);
+      final container = ProviderContainer.test(
+        overrides: [
+          obtenirInterventionsProvider.overrideWithValue(
+            ObtenirInterventions(repository),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      await container.read(interventionsProvider.future);
+
+      final refresh = container
+          .read(interventionsProvider.notifier)
+          .recharger();
+
+      expect(repository.readCount, 2);
+      expect(container.read(interventionsProvider).requireValue, initialData);
+      repository.refreshResult.complete(refreshedData);
+      expect(await refresh, isTrue);
+      expect(
+        container
+            .read(interventionsProvider)
+            .requireValue
+            .interventions
+            .single
+            .statut,
+        StatutIntervention.terminee,
+      );
+    },
+  );
+
+  test(
+    'refresh échoué conserve les données et les critères d affichage',
+    () async {
+      final initialData = _data(StatutIntervention.enCours);
+      final repository = _FailedRefreshRepository(initialData);
+      final container = ProviderContainer.test(
+        overrides: [
+          obtenirInterventionsProvider.overrideWithValue(
+            ObtenirInterventions(repository),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      await container.read(interventionsProvider.future);
+      final filtersNotifier = container.read(
+        interventionFiltersProvider.notifier,
+      );
+      filtersNotifier.rechercher('Patrimonio');
+      filtersNotifier.filtrerParStatut(StatutFilter.enCours);
+      filtersNotifier.filtrerParPriorite(PrioriteFilter.haute);
+      filtersNotifier.trierPar(InterventionSort.statut);
+      filtersNotifier.inverserOrdre();
+
+      final succeeded = await container
+          .read(interventionsProvider.notifier)
+          .recharger();
+
+      expect(succeeded, isFalse);
+      expect(container.read(interventionsProvider).hasValue, isTrue);
+      expect(container.read(interventionsProvider).requireValue, initialData);
+      final filters = container.read(interventionFiltersProvider);
+      expect(filters.recherche, 'Patrimonio');
+      expect(filters.statut, StatutFilter.enCours);
+      expect(filters.priorite, PrioriteFilter.haute);
+      expect(filters.tri, InterventionSort.statut);
+      expect(filters.direction, SortDirection.descending);
+    },
+  );
+
+  test('réordonne la liste triée par statut après une progression', () async {
+    final repository = _FakeRepository(initialData: _statusSortData());
+    final container = ProviderContainer.test(
+      overrides: [
+        obtenirInterventionsProvider.overrideWithValue(
+          ObtenirInterventions(repository),
+        ),
+        mettreAJourStatutProvider.overrideWithValue(
+          MettreAJourStatut(repository),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    await container.read(interventionsProvider.future);
+    const filters = InterventionFilters(tri: InterventionSort.statut);
+
+    await container
+        .read(interventionsProvider.notifier)
+        .mettreAJourStatut('itv-1');
+    final sorted = filtrerInterventions(
+      container.read(interventionsProvider).requireValue.interventions,
+      filters,
+    );
+
+    expect(sorted.map((item) => item.id), ['itv-2', 'itv-1']);
+  });
 }
 
 Future<_TestContext> _context(
@@ -175,6 +277,38 @@ DonneesInterventions _data(StatutIntervention status) {
         statut: status,
         datePrevue: DateTime(2026, 6, 15),
         description: 'Remplacement du capteur.',
+        historique: const [],
+      ),
+    ],
+  );
+}
+
+DonneesInterventions _statusSortData() {
+  return DonneesInterventions(
+    technicien: const Technicien(id: 't-01', nom: 'Marie Santini'),
+    interventions: [
+      Intervention(
+        id: 'itv-1',
+        station: 'Station 1',
+        domaine: 'Domaine 1',
+        latitude: 42,
+        longitude: 9,
+        priorite: Priorite.haute,
+        statut: StatutIntervention.planifiee,
+        datePrevue: DateTime(2026, 6, 15),
+        description: 'Intervention 1',
+        historique: const [],
+      ),
+      Intervention(
+        id: 'itv-2',
+        station: 'Station 2',
+        domaine: 'Domaine 2',
+        latitude: 42,
+        longitude: 9,
+        priorite: Priorite.moyenne,
+        statut: StatutIntervention.planifiee,
+        datePrevue: DateTime(2026, 6, 16),
+        description: 'Intervention 2',
         historique: const [],
       ),
     ],
@@ -229,6 +363,51 @@ final class _RetryRepository implements InterventionRepository {
       throw const NetworkFailure();
     }
     return retryResult.future;
+  }
+
+  @override
+  Future<void> mettreAJourStatut(
+    String interventionId,
+    StatutIntervention statut,
+  ) async {}
+}
+
+final class _RefreshRepository implements InterventionRepository {
+  _RefreshRepository(this.initialData);
+
+  final DonneesInterventions initialData;
+  final Completer<DonneesInterventions> refreshResult = Completer();
+  int readCount = 0;
+
+  @override
+  Future<DonneesInterventions> recupererDonneesInitiales() async {
+    readCount++;
+    if (readCount == 1) {
+      return initialData;
+    }
+    return refreshResult.future;
+  }
+
+  @override
+  Future<void> mettreAJourStatut(
+    String interventionId,
+    StatutIntervention statut,
+  ) async {}
+}
+
+final class _FailedRefreshRepository implements InterventionRepository {
+  _FailedRefreshRepository(this.initialData);
+
+  final DonneesInterventions initialData;
+  int readCount = 0;
+
+  @override
+  Future<DonneesInterventions> recupererDonneesInitiales() async {
+    readCount++;
+    if (readCount > 1) {
+      throw const NetworkFailure();
+    }
+    return initialData;
   }
 
   @override

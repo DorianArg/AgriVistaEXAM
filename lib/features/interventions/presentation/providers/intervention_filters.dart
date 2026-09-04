@@ -31,26 +31,56 @@ enum PrioriteFilter {
   };
 }
 
+enum InterventionSort {
+  datePrevue,
+  priorite,
+  statut;
+
+  String get label => switch (this) {
+    InterventionSort.datePrevue => 'Date prévue',
+    InterventionSort.priorite => 'Priorité',
+    InterventionSort.statut => 'Statut',
+  };
+}
+
+enum SortDirection {
+  ascending,
+  descending;
+
+  String get label => switch (this) {
+    SortDirection.ascending => 'Croissant',
+    SortDirection.descending => 'Décroissant',
+  };
+}
+
 final class InterventionFilters {
   const InterventionFilters({
     this.recherche = '',
     this.statut = StatutFilter.tous,
     this.priorite = PrioriteFilter.toutes,
+    this.tri = InterventionSort.datePrevue,
+    this.direction = SortDirection.ascending,
   });
 
   final String recherche;
   final StatutFilter statut;
   final PrioriteFilter priorite;
+  final InterventionSort tri;
+  final SortDirection direction;
 
   InterventionFilters copyWith({
     String? recherche,
     StatutFilter? statut,
     PrioriteFilter? priorite,
+    InterventionSort? tri,
+    SortDirection? direction,
   }) {
     return InterventionFilters(
       recherche: recherche ?? this.recherche,
       statut: statut ?? this.statut,
       priorite: priorite ?? this.priorite,
+      tri: tri ?? this.tri,
+      direction: direction ?? this.direction,
     );
   }
 }
@@ -76,12 +106,32 @@ final class InterventionFiltersNotifier extends Notifier<InterventionFilters> {
     state = state.copyWith(priorite: value);
   }
 
+  void trierPar(InterventionSort value) {
+    state = state.copyWith(tri: value);
+  }
+
+  void inverserOrdre() {
+    state = state.copyWith(
+      direction: state.direction == SortDirection.ascending
+          ? SortDirection.descending
+          : SortDirection.ascending,
+    );
+  }
+
   void appliquerStatutDepuisDashboard(StatutFilter value) {
-    state = InterventionFilters(statut: value);
+    state = InterventionFilters(
+      statut: value,
+      tri: state.tri,
+      direction: state.direction,
+    );
   }
 
   void appliquerPrioriteDepuisDashboard(PrioriteFilter value) {
-    state = InterventionFilters(priorite: value);
+    state = InterventionFilters(
+      priorite: value,
+      tri: state.tri,
+      direction: state.direction,
+    );
   }
 }
 
@@ -91,7 +141,7 @@ List<Intervention> filtrerInterventions(
 ) {
   final recherche = filters.recherche.trim().toLowerCase();
 
-  return interventions
+  final filtered = interventions
       .where((intervention) {
         final correspondRecherche =
             recherche.isEmpty ||
@@ -119,4 +169,49 @@ List<Intervention> filtrerInterventions(
         return correspondRecherche && correspondStatut && correspondPriorite;
       })
       .toList(growable: false);
+
+  final indexed = filtered.asMap().entries.toList();
+  indexed.sort((left, right) {
+    final comparison = _compareInterventions(
+      left.value,
+      right.value,
+      filters.tri,
+    );
+    if (comparison == 0) {
+      return left.key.compareTo(right.key);
+    }
+    return filters.direction == SortDirection.ascending
+        ? comparison
+        : -comparison;
+  });
+
+  return indexed.map((entry) => entry.value).toList(growable: false);
 }
+
+int _compareInterventions(
+  Intervention left,
+  Intervention right,
+  InterventionSort sort,
+) {
+  return switch (sort) {
+    InterventionSort.datePrevue => left.datePrevue.compareTo(right.datePrevue),
+    InterventionSort.priorite => _prioriteRank(
+      left.priorite,
+    ).compareTo(_prioriteRank(right.priorite)),
+    InterventionSort.statut => _statutRank(
+      left.statut,
+    ).compareTo(_statutRank(right.statut)),
+  };
+}
+
+int _prioriteRank(Priorite priorite) => switch (priorite) {
+  Priorite.haute => 0,
+  Priorite.moyenne => 1,
+  Priorite.basse => 2,
+};
+
+int _statutRank(StatutIntervention statut) => switch (statut) {
+  StatutIntervention.planifiee => 0,
+  StatutIntervention.enCours => 1,
+  StatutIntervention.terminee => 2,
+};
