@@ -1,3 +1,4 @@
+import 'package:agrivista_field/app/app_constants.dart';
 import 'package:agrivista_field/features/interventions/domain/entities/intervention.dart';
 import 'package:agrivista_field/features/interventions/presentation/pages/intervention_detail_page.dart';
 import 'package:agrivista_field/features/interventions/presentation/pages/interventions_page.dart';
@@ -18,7 +19,7 @@ final class _AppShellState extends State<AppShell> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_selectedIndex == 0 ? 'AgriVista Field' : 'Profil'),
+        title: Text(_selectedIndex == 0 ? AppConstants.name : 'Profil'),
       ),
       body: IndexedStack(
         index: _selectedIndex,

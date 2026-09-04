@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:agrivista_field/core/errors/app_failure.dart';
 import 'package:agrivista_field/features/interventions/domain/entities/donnees_interventions.dart';
 import 'package:agrivista_field/features/interventions/domain/entities/statut_intervention.dart';
 import 'package:agrivista_field/features/interventions/domain/entities/technicien.dart';
@@ -76,6 +79,40 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('AF'), findsOneWidget);
   });
+
+  testWidgets('réessaie après une erreur puis affiche le profil', (
+    tester,
+  ) async {
+    final repository = _RetryRepository(
+      DonneesInterventions(
+        technicien: const Technicien(id: 'tech-42', nom: 'Jean Dupont'),
+        interventions: const [],
+      ),
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          obtenirInterventionsProvider.overrideWithValue(
+            ObtenirInterventions(repository),
+          ),
+        ],
+        child: const MaterialApp(home: Scaffold(body: ProfilePage())),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Impossible de contacter le serveur.'), findsOneWidget);
+    expect(find.text('Réessayer'), findsOneWidget);
+
+    await tester.tap(find.text('Réessayer'));
+    await tester.pump();
+    expect(find.text('Chargement du profil…'), findsOneWidget);
+
+    repository.retryResult.complete(repository.data);
+    await tester.pumpAndSettle();
+    expect(find.text('Jean Dupont'), findsOneWidget);
+    expect(find.text('Impossible de contacter le serveur.'), findsNothing);
+  });
 }
 
 final class _FakeRepository implements InterventionRepository {
@@ -85,6 +122,29 @@ final class _FakeRepository implements InterventionRepository {
 
   @override
   Future<DonneesInterventions> recupererDonneesInitiales() async => data;
+
+  @override
+  Future<void> mettreAJourStatut(
+    String interventionId,
+    StatutIntervention statut,
+  ) async {}
+}
+
+final class _RetryRepository implements InterventionRepository {
+  _RetryRepository(this.data);
+
+  final DonneesInterventions data;
+  final Completer<DonneesInterventions> retryResult = Completer();
+  int readCount = 0;
+
+  @override
+  Future<DonneesInterventions> recupererDonneesInitiales() async {
+    readCount++;
+    if (readCount == 1) {
+      throw const NetworkFailure();
+    }
+    return retryResult.future;
+  }
 
   @override
   Future<void> mettreAJourStatut(

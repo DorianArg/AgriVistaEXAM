@@ -57,6 +57,10 @@ void main() {
     expect(_ids(interventions, recherche: 'sTaTiOn NoRd'), ['1']);
   });
 
+  test('ignore les espaces autour de la recherche', () {
+    expect(_ids(interventions, recherche: '  Patrimonio  '), ['1']);
+  });
+
   test('filtre les interventions planifiées', () {
     expect(_ids(interventions, statut: StatutFilter.planifiee), ['1', '4']);
   });
@@ -92,6 +96,18 @@ void main() {
     expect(
       _ids(
         interventions,
+        statut: StatutFilter.planifiee,
+        priorite: PrioriteFilter.moyenne,
+      ),
+      ['4'],
+    );
+  });
+
+  test('combine recherche, statut et priorité', () {
+    expect(
+      _ids(
+        interventions,
+        recherche: 'station',
         statut: StatutFilter.planifiee,
         priorite: PrioriteFilter.moyenne,
       ),

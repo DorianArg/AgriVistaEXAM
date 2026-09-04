@@ -90,6 +90,39 @@ void main() {
 
     expect(dto.toDomain, throwsA(isA<DataParsingFailure>()));
   });
+
+  test('rejette un technicien dont un champ obligatoire est vide', () {
+    final dto = AgriVistaResponseDto.fromJson(
+      _validJson()
+        ..['technicien'] = <String, Object?>{'id': ' ', 'nom': 'Marie Santini'},
+    );
+
+    expect(dto.toDomain, throwsA(isA<DataParsingFailure>()));
+  });
+
+  test('rejette des coordonnées hors limites géographiques', () {
+    final json = _validJson();
+    final intervention =
+        (json['interventions']! as List<Object?>).single
+            as Map<String, Object?>;
+    intervention['latitude'] = 91.0;
+    final dto = AgriVistaResponseDto.fromJson(json);
+
+    expect(dto.toDomain, throwsA(isA<DataParsingFailure>()));
+  });
+
+  test('rejette un historique dont un champ obligatoire est vide', () {
+    final json = _validJson();
+    final intervention =
+        (json['interventions']! as List<Object?>).single
+            as Map<String, Object?>;
+    intervention['historique'] = <Object?>[
+      <String, Object?>{'date': '2026-06-10', 'action': ' '},
+    ];
+    final dto = AgriVistaResponseDto.fromJson(json);
+
+    expect(dto.toDomain, throwsA(isA<DataParsingFailure>()));
+  });
 }
 
 Map<String, Object?> _validJson({

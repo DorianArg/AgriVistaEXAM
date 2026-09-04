@@ -1,4 +1,5 @@
 import 'package:agrivista_field/app/app_shell.dart';
+import 'package:agrivista_field/app/app_constants.dart';
 import 'package:agrivista_field/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
@@ -10,7 +11,7 @@ class AgriVistaApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'AgriVista Field',
+      title: AppConstants.name,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       home: home ?? const AppShell(),

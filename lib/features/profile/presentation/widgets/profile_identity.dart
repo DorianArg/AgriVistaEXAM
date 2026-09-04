@@ -1,3 +1,4 @@
+import 'package:agrivista_field/app/app_constants.dart';
 import 'package:agrivista_field/features/interventions/domain/entities/technicien.dart';
 import 'package:flutter/material.dart';
 
@@ -5,8 +6,6 @@ final class ProfileIdentity extends StatelessWidget {
   const ProfileIdentity({required this.technicien, super.key});
 
   static const _role = 'Technicienne terrain';
-  static const _applicationName = 'AgriVista Field';
-
   final Technicien technicien;
 
   @override
@@ -90,7 +89,7 @@ final class ProfileIdentity extends StatelessWidget {
                   Icons.eco_outlined,
                   color: theme.colorScheme.primary,
                 ),
-                title: const Text(_applicationName),
+                title: const Text(AppConstants.name),
                 subtitle: const Text('Application de suivi des interventions'),
               ),
             ),

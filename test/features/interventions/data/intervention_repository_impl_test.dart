@@ -32,23 +32,55 @@ void main() {
       expect(intervention.historique.single.action, 'Intervention creee');
     });
 
-    test('fusionne seulement les interventions surchargées', () async {
+    test(
+      'fusionne les surcharges sans créer une intervention obsolète',
+      () async {
+        final repository = _repository(
+          response: _response([
+            _intervention('itv-1', 'planifiee'),
+            _intervention('itv-2', 'en_cours'),
+            _intervention('itv-3', 'terminee'),
+          ]),
+          overrides: {
+            'itv-1': StatutIntervention.enCours,
+            'itv-3': StatutIntervention.terminee,
+            'itv-obsolete': StatutIntervention.enCours,
+          },
+        );
+
+        final result = await repository.recupererDonneesInitiales();
+
+        expect(result.interventions.map((item) => item.statut), [
+          StatutIntervention.enCours,
+          StatutIntervention.enCours,
+          StatutIntervention.terminee,
+        ]);
+        expect(result.interventions, hasLength(3));
+        expect(
+          result.interventions.any((item) => item.id == 'itv-obsolete'),
+          isFalse,
+        );
+      },
+    );
+
+    test('applique une surcharge à toutes les interventions JSON', () async {
       final repository = _repository(
         response: _response([
           _intervention('itv-1', 'planifiee'),
           _intervention('itv-2', 'en_cours'),
-          _intervention('itv-3', 'terminee'),
         ]),
-        overrides: {'itv-1': StatutIntervention.terminee},
+        overrides: {
+          'itv-1': StatutIntervention.terminee,
+          'itv-2': StatutIntervention.terminee,
+        },
       );
 
       final result = await repository.recupererDonneesInitiales();
 
-      expect(result.interventions.map((item) => item.statut), [
-        StatutIntervention.terminee,
-        StatutIntervention.enCours,
-        StatutIntervention.terminee,
-      ]);
+      expect(
+        result.interventions.map((item) => item.statut),
+        everyElement(StatutIntervention.terminee),
+      );
     });
 
     test('propage une erreur de lecture locale au chargement global', () {
@@ -122,11 +154,6 @@ final class _FakeLocalDataSource implements InterventionLocalDataSource {
       throw failure;
     }
     return overrides;
-  }
-
-  @override
-  Future<StatutIntervention?> lireStatut(String interventionId) async {
-    return overrides[interventionId];
   }
 
   @override

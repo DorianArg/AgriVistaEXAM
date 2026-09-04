@@ -10,8 +10,6 @@ abstract final class InterventionStatusStorage {
 abstract interface class InterventionLocalDataSource {
   Future<Map<String, StatutIntervention>> lireSurchargesStatut();
 
-  Future<StatutIntervention?> lireStatut(String interventionId);
-
   Future<void> enregistrerStatut(
     String interventionId,
     StatutIntervention statut,
@@ -26,6 +24,7 @@ final class HiveInterventionLocalDataSource
 
   @override
   Future<Map<String, StatutIntervention>> lireSurchargesStatut() async {
+    _ensureBoxOpen();
     try {
       final surcharges = <String, StatutIntervention>{};
       for (final entry in _box.toMap().entries) {
@@ -46,18 +45,6 @@ final class HiveInterventionLocalDataSource
   }
 
   @override
-  Future<StatutIntervention?> lireStatut(String interventionId) async {
-    try {
-      final value = _box.get(interventionId);
-      return value == null ? null : statutInterventionFromStorage(value);
-    } on LocalStorageFailure {
-      rethrow;
-    } catch (_) {
-      throw const LocalStorageFailure();
-    }
-  }
-
-  @override
   Future<void> enregistrerStatut(
     String interventionId,
     StatutIntervention statut,
@@ -68,10 +55,17 @@ final class HiveInterventionLocalDataSource
       );
     }
 
+    _ensureBoxOpen();
     try {
       await _box.put(interventionId, statut.toStorageValue());
     } catch (_) {
       throw const LocalStorageFailure();
+    }
+  }
+
+  void _ensureBoxOpen() {
+    if (!_box.isOpen) {
+      throw const LocalStorageFailure('Le stockage local est fermé.');
     }
   }
 }

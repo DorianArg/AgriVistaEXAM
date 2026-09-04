@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:agrivista_field/core/errors/app_failure.dart';
 import 'package:agrivista_field/features/interventions/domain/entities/donnees_interventions.dart';
 import 'package:agrivista_field/features/interventions/domain/entities/intervention.dart';
@@ -23,6 +25,7 @@ void main() {
     expect(result, StatutIntervention.enCours);
     expect(_status(context.container), StatutIntervention.enCours);
     expect(context.repository.savedStatus, StatutIntervention.enCours);
+    expect(context.repository.readCount, 1);
   });
 
   test('met à jour une intervention en cours vers terminée', () async {
@@ -98,6 +101,33 @@ void main() {
     expect(before, hasLength(1));
     expect(after, isEmpty);
   });
+
+  test('recharger passe de error à loading puis data', () async {
+    final repository = _RetryRepository(_data(StatutIntervention.planifiee));
+    final container = ProviderContainer.test(
+      overrides: [
+        obtenirInterventionsProvider.overrideWithValue(
+          ObtenirInterventions(repository),
+        ),
+      ],
+    );
+
+    await expectLater(
+      container.read(interventionsProvider.future),
+      throwsA(isA<NetworkFailure>()),
+    );
+    expect(container.read(interventionsProvider).hasError, isTrue);
+
+    final retry = container.read(interventionsProvider.notifier).recharger();
+    expect(container.read(interventionsProvider).isLoading, isTrue);
+
+    repository.retryResult.complete(repository.data);
+    await retry;
+
+    expect(container.read(interventionsProvider).hasValue, isTrue);
+    expect(container.read(interventionsProvider).requireValue, repository.data);
+    expect(repository.readCount, 2);
+  });
 }
 
 Future<_TestContext> _context(
@@ -164,9 +194,13 @@ final class _FakeRepository implements InterventionRepository {
   final DonneesInterventions initialData;
   final AppFailure? writeFailure;
   StatutIntervention? savedStatus;
+  int readCount = 0;
 
   @override
-  Future<DonneesInterventions> recupererDonneesInitiales() async => initialData;
+  Future<DonneesInterventions> recupererDonneesInitiales() async {
+    readCount++;
+    return initialData;
+  }
 
   @override
   Future<void> mettreAJourStatut(
@@ -179,4 +213,27 @@ final class _FakeRepository implements InterventionRepository {
     }
     savedStatus = statut;
   }
+}
+
+final class _RetryRepository implements InterventionRepository {
+  _RetryRepository(this.data);
+
+  final DonneesInterventions data;
+  final Completer<DonneesInterventions> retryResult = Completer();
+  int readCount = 0;
+
+  @override
+  Future<DonneesInterventions> recupererDonneesInitiales() async {
+    readCount++;
+    if (readCount == 1) {
+      throw const NetworkFailure();
+    }
+    return retryResult.future;
+  }
+
+  @override
+  Future<void> mettreAJourStatut(
+    String interventionId,
+    StatutIntervention statut,
+  ) async {}
 }

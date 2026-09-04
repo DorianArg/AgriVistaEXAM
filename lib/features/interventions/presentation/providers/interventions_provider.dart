@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 final interventionsProvider =
     AsyncNotifierProvider<InterventionsNotifier, DonneesInterventions>(
       InterventionsNotifier.new,
+      retry: (_, _) => null,
     );
 
 final class InterventionsNotifier extends AsyncNotifier<DonneesInterventions> {

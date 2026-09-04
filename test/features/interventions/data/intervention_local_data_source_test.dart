@@ -33,13 +33,14 @@ void main() {
       expect(await dataSource.lireSurchargesStatut(), isEmpty);
     });
 
-    test('lit un statut local valide', () async {
+    test('lit plusieurs surcharges locales valides', () async {
       await box.put('itv-1001', 'en_cours');
+      await box.put('itv-1002', 'terminee');
 
-      expect(
-        await dataSource.lireStatut('itv-1001'),
-        StatutIntervention.enCours,
-      );
+      expect(await dataSource.lireSurchargesStatut(), {
+        'itv-1001': StatutIntervention.enCours,
+        'itv-1002': StatutIntervention.terminee,
+      });
     });
 
     test('écrit un statut dans la box', () async {
@@ -51,6 +52,37 @@ void main() {
       expect(box.get('itv-1001'), 'terminee');
     });
 
+    test('écrase le statut précédent pour le même identifiant', () async {
+      await dataSource.enregistrerStatut(
+        'itv-1001',
+        StatutIntervention.enCours,
+      );
+      await dataSource.enregistrerStatut(
+        'itv-1001',
+        StatutIntervention.terminee,
+      );
+
+      expect(await dataSource.lireSurchargesStatut(), {
+        'itv-1001': StatutIntervention.terminee,
+      });
+    });
+
+    test('retrouve les statuts après fermeture et réouverture', () async {
+      final boxName = box.name;
+      await dataSource.enregistrerStatut(
+        'itv-1001',
+        StatutIntervention.enCours,
+      );
+      await box.close();
+
+      box = await Hive.openBox<String>(boxName);
+      dataSource = HiveInterventionLocalDataSource(box);
+
+      expect(await dataSource.lireSurchargesStatut(), {
+        'itv-1001': StatutIntervention.enCours,
+      });
+    });
+
     test('rejette une valeur locale inconnue', () async {
       await box.put('itv-1001', 'annulee');
 
@@ -58,6 +90,32 @@ void main() {
         dataSource.lireSurchargesStatut,
         throwsA(isA<LocalStorageFailure>()),
       );
+    });
+
+    test('traduit une erreur de lecture de la box', () async {
+      final boxName = box.name;
+      await box.close();
+
+      await expectLater(
+        dataSource.lireSurchargesStatut(),
+        throwsA(isA<LocalStorageFailure>()),
+      );
+
+      box = await Hive.openBox<String>(boxName);
+      dataSource = HiveInterventionLocalDataSource(box);
+    });
+
+    test('traduit une erreur d écriture de la box', () async {
+      final boxName = box.name;
+      await box.close();
+
+      await expectLater(
+        dataSource.enregistrerStatut('itv-1001', StatutIntervention.enCours),
+        throwsA(isA<LocalStorageFailure>()),
+      );
+
+      box = await Hive.openBox<String>(boxName);
+      dataSource = HiveInterventionLocalDataSource(box);
     });
   });
 

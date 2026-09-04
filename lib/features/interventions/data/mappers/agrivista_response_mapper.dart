@@ -27,7 +27,12 @@ extension TechnicienDtoMapper on TechnicienDto {
 
 extension InterventionDtoMapper on InterventionDto {
   Intervention toDomain() {
-    if (!latitude.isFinite || !longitude.isFinite) {
+    if (!latitude.isFinite ||
+        latitude < -90 ||
+        latitude > 90 ||
+        !longitude.isFinite ||
+        longitude < -180 ||
+        longitude > 180) {
       throw const DataParsingFailure(
         'Les coordonnées de l’intervention sont invalides.',
       );
