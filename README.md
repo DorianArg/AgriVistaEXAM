@@ -29,12 +29,7 @@ AgriVista Field est une application Flutter interne destinée aux techniciens te
 - [Dossier de conception — PDF](docs/Dossier_conception_AgriVista_Field_Dorian_ARGAILLOT.pdf) — version destinée à la remise.
 - [Dossier technique — PDF](docs/Dossier_technique_AgriVista_Field_Dorian_ARGAILLOT.pdf) — version destinée à la remise.
 
-### Sources éditables
-
-- [Dossier technique — DOCX](docs/Dossier_technique_AgriVista_Field_Dorian_ARGAILLOT.docx).
-- [Dossier technique — Markdown](docs/dossier_technique.md).
-
-Les PDF sont les documents destinés à la remise. Les fichiers DOCX et Markdown constituent les sources éditables du dossier technique.
+Les PDF sont les documents destinés à la remise.
 
 ## Organisation du projet
 
@@ -213,4 +208,4 @@ Aucune validation manuelle iOS n’est déclarée.
 - compilation iOS non exécutée sous Windows ;
 - fonctionnalités bonus non développées.
 
-Les documents complets sont accessibles dans la section Livrables : [dossier de conception](docs/Dossier_conception_AgriVista_Field_Dorian_ARGAILLOT.pdf) et [dossier technique](docs/Dossier_technique_AgriVista_Field_Dorian_ARGAILLOT.pdf). La source détaillée du dossier technique reste également disponible en [Markdown](docs/dossier_technique.md).
+Les documents complets sont accessibles dans la section Livrables : [dossier de conception](docs/Dossier_conception_AgriVista_Field_Dorian_ARGAILLOT.pdf) et [dossier technique](docs/Dossier_technique_AgriVista_Field_Dorian_ARGAILLOT.pdf).
