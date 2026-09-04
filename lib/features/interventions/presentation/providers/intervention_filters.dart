@@ -75,6 +75,14 @@ final class InterventionFiltersNotifier extends Notifier<InterventionFilters> {
   void filtrerParPriorite(PrioriteFilter value) {
     state = state.copyWith(priorite: value);
   }
+
+  void appliquerStatutDepuisDashboard(StatutFilter value) {
+    state = InterventionFilters(statut: value);
+  }
+
+  void appliquerPrioriteDepuisDashboard(PrioriteFilter value) {
+    state = InterventionFilters(priorite: value);
+  }
 }
 
 List<Intervention> filtrerInterventions(

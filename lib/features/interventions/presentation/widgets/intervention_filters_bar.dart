@@ -2,18 +2,53 @@ import 'package:agrivista_field/features/interventions/presentation/providers/in
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final class InterventionFiltersBar extends ConsumerWidget {
+final class InterventionFiltersBar extends ConsumerStatefulWidget {
   const InterventionFiltersBar({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<InterventionFiltersBar> createState() =>
+      _InterventionFiltersBarState();
+}
+
+final class _InterventionFiltersBarState
+    extends ConsumerState<InterventionFiltersBar> {
+  late final TextEditingController _searchController;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController = TextEditingController(
+      text: ref.read(interventionFiltersProvider).recherche,
+    );
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final filters = ref.watch(interventionFiltersProvider);
     final notifier = ref.read(interventionFiltersProvider.notifier);
+    ref.listen(interventionFiltersProvider.select((value) => value.recherche), (
+      _,
+      recherche,
+    ) {
+      if (_searchController.text != recherche) {
+        _searchController.value = TextEditingValue(
+          text: recherche,
+          selection: TextSelection.collapsed(offset: recherche.length),
+        );
+      }
+    });
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TextField(
+          controller: _searchController,
           onChanged: notifier.rechercher,
           textInputAction: TextInputAction.search,
           decoration: const InputDecoration(

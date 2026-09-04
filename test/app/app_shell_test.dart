@@ -13,7 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('navigue entre la liste, le profil et le détail avec retour', (
+  testWidgets('navigue entre le dashboard, la liste, le profil et le détail', (
     tester,
   ) async {
     final repository = _FakeRepository(_data());
@@ -32,6 +32,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.text('Bonjour Marie'), findsOneWidget);
+
+    await tester.tap(find.text('Interventions').last);
+    await tester.pumpAndSettle();
     expect(find.text('Station Nord'), findsOneWidget);
 
     await tester.tap(find.text('Profil'));
