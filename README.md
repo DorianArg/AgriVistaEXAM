@@ -2,84 +2,31 @@
 
 ## Présentation
 
-AgriVista est une entreprise corse spécialisée dans l’installation et la maintenance de stations de capteurs connectés destinées aux exploitations agricoles et viticoles.
+AgriVista Field est une application Flutter interne destinée aux techniciens qui installent et entretiennent les stations de capteurs connectés d’AgriVista. Elle charge les interventions depuis un JSON distant, accompagne leur traitement sur le terrain et conserve localement les informations qui ne sont pas synchronisées avec le serveur.
 
-AgriVista Field est une application Flutter interne destinée aux techniciens terrain. Elle permet de consulter les interventions provenant d’un JSON distant, de les rechercher, de les filtrer, d’afficher leur détail et de faire évoluer leur statut. Les modifications de statut sont conservées localement avec Hive.
+## Fonctionnalités principales
 
-## Fonctionnalités
-
-- chargement en lecture seule du JSON distant ;
-- désérialisation et validation typées ;
-- liste des interventions ;
+- chargement du JSON distant avec Dio et désérialisation typée ;
+- liste des interventions avec états loading, data, empty et error ;
 - recherche par station, domaine ou description ;
-- filtres par statut et priorité ;
-- détail complet : station, domaine, localisation, priorité, statut, date, description et historique ;
-- progression `planifiee → en_cours → terminee` ;
-- persistance locale des statuts et conservation après redémarrage ;
-- états loading, data, empty et error distincts ;
-- rechargement manuel avec le bouton « Réessayer » ;
-- profil dynamique du technicien ;
-- navigation Material 3 entre Interventions et Profil.
+- filtres par statut (`planifiee`, `en_cours`, `terminee`) et priorité ;
+- détail complet : station, domaine, coordonnées, priorité, statut, date prévue, description et historique ;
+- progression contrôlée du statut `planifiee → en_cours → terminee` ;
+- persistance locale des changements de statut avec Hive ;
+- message d’erreur explicite et action « Réessayer » après un échec initial ;
+- profil alimenté par les données du technicien ;
+- navigation Material 3 entre Dashboard, Interventions et Profil.
 
-## Livrables
+## Extensions optionnelles réalisées
 
-### Documents de remise
-
-- [Sujet officiel](docs/25-26_mespr-flutter.pdf) — document PDF fourni par l’équipe pédagogique.
-- [Dossier de conception — PDF](docs/Dossier_conception_AgriVista_Field_Dorian_ARGAILLOT.pdf) — version destinée à la remise.
-- [Dossier technique — PDF](docs/Dossier_technique_AgriVista_Field_Dorian_ARGAILLOT.pdf) — version destinée à la remise.
-
-Les PDF sont les documents destinés à la remise.
-
-## Organisation du projet
-
-```text
-.
-├── android/          # cible Android
-├── ios/              # cible iOS
-├── docs/             # sujet et documentation de remise
-├── lib/              # code source Flutter
-├── test/             # tests automatisés
-├── pubspec.yaml      # dépendances et configuration Flutter
-└── README.md         # point d’entrée du repository
-```
-
-```text
-lib/
-├── app/
-├── core/
-├── features/
-│   ├── interventions/
-│   │   ├── data/
-│   │   ├── domain/
-│   │   └── presentation/
-│   └── profile/
-└── main.dart
-```
-
-### `lib/app`
-
-Démarrage de l’application, composition technique, navigation et configuration applicative.
-
-### `lib/core`
-
-Erreurs typées, client réseau, thème, utilitaires et widgets partagés.
-
-### `features/interventions/domain`
-
-Entités, enums, contrat abstrait du repository, use cases et règles métier.
-
-### `features/interventions/data`
-
-Client Dio, RemoteDataSource, stockage Hive, DTO, mappers et implémentation du repository.
-
-### `features/interventions/presentation`
-
-Pages, widgets, providers Riverpod, filtres et états UI.
-
-### `features/profile`
-
-Page et widgets du profil alimentés par le technicien du provider principal.
+- dashboard de synthèse avec compteurs par statut et priorité ;
+- pull-to-refresh conservant la dernière liste valide en cas d’échec ;
+- tri par date prévue, priorité ou statut, en ordre croissant ou décroissant ;
+- note terrain locale propre à chaque intervention ;
+- sélection, copie permanente et remplacement d’une photo locale ;
+- thèmes Système, Clair et Sombre, avec préférence persistée ;
+- interface responsive avec `NavigationBar` sur téléphone et `NavigationRail` sur tablette ;
+- master/detail tablette : liste à gauche et détail sélectionné à droite.
 
 ## Architecture
 
@@ -89,123 +36,132 @@ Le projet suit une Clean Architecture :
 Presentation → Domain ← Data
 ```
 
-- **Domain** : Dart pur, avec les entités, règles métier, repositories abstraits et use cases. Il ne dépend pas de Flutter, Riverpod, Dio ou Hive.
-- **Data** : lecture Dio, JSON, DTO, mapping, Hive et implémentation du repository.
-- **Presentation** : pages et widgets Flutter, Riverpod, `AsyncNotifier`, filtres et gestion loading/data/error.
+- **Domain** : entités, règles métier, contrats de repositories et cas d’usage en Dart pur. Aucun import Flutter, Riverpod, Dio ou Hive.
+- **Data** : DTO, parsing JSON, mappers, sources Dio/Hive, gestion des fichiers photo et implémentations des repositories.
+- **Presentation** : pages et widgets Flutter, providers Riverpod, filtres, tri et états d’interface.
+- **Composition root** : `lib/app/bootstrap.dart` initialise Hive et injecte les implémentations techniques dans `ProviderScope`.
 
 Flux principal :
 
 ```text
-UI
- ↓
-Riverpod
- ↓
-Use Case
- ↓
-Repository
- ↓
-Data Sources
+UI → Riverpod → Use case → Repository → Data source
+```
+
+## Organisation du repository
+
+```text
+.
+├── android/                 # cible Android
+├── ios/                     # cible iOS générée et configurée
+├── docs/                    # sujet et documents de livraison
+├── lib/
+│   ├── app/                 # application, shell et composition root
+│   ├── core/                # erreurs, réseau, thèmes, responsive, widgets communs
+│   └── features/
+│       ├── dashboard/       # synthèse des interventions
+│       ├── interventions/
+│       │   ├── data/
+│       │   ├── domain/
+│       │   └── presentation/
+│       └── profile/         # profil et sélection du thème
+├── test/                    # tests unitaires, providers et widgets
+├── pubspec.yaml
+└── README.md
 ```
 
 ## Stack technique
 
-Versions relevées dans l’environnement Flutter et `pubspec.lock` :
+Versions résolues dans `pubspec.lock` :
 
 | Technologie | Version | Rôle |
 |---|---:|---|
-| Flutter | 3.44.8 | framework mobile et Material 3 |
-| Dart | 3.12.2 | langage de l’application |
-| flutter_riverpod | 3.4.2 | gestion d’état et injection de dépendances |
-| dio | 5.11.0 | lecture HTTP du JSON |
-| freezed / freezed_annotation | 3.2.5 / 3.1.0 | DTO immuables et génération de code |
-| json_serializable / json_annotation | 6.14.1 / 4.12.0 | désérialisation typée |
-| hive_flutter / hive | 1.1.0 / 2.2.3 | persistance locale des statuts |
+| Flutter | 3.44.8 | framework et Material 3 |
+| Dart | 3.12.2 | langage |
+| flutter_riverpod | 3.4.2 | état et injection de dépendances |
+| dio | 5.11.0 | client HTTP |
+| freezed / freezed_annotation | 3.2.5 / 3.1.0 | DTO immuables et génération |
+| json_serializable / json_annotation | 6.14.1 / 4.12.0 | désérialisation JSON |
+| hive_flutter / hive | 1.1.0 / 2.2.3 | persistance locale |
+| image_picker | 1.2.3 | sélection d’une photo dans la galerie |
+| path_provider | 2.1.6 | accès au stockage permanent de l’application |
 
-## Installation
+## Source JSON
 
-Prérequis : Flutter, Dart, Android SDK et un appareil ou émulateur Android. macOS avec Xcode est nécessaire pour compiler la cible iOS.
+`https://utrera.ludovic.aflokkat-projet.fr/getInterventions.json`
+
+- requête HTTP GET et source distante en lecture seule ;
+- connexion nécessaire au premier chargement et à chaque actualisation ;
+- pas de cache complet du JSON ;
+- le JSON reste la référence pour le technicien, les interventions et l’historique ;
+- les valeurs locales autorisées surchargent uniquement les champs concernés.
+
+## Persistance locale
+
+Hive utilise quatre boxes :
+
+| Box | Contenu |
+|---|---|
+| `intervention_statuses` | statut local par identifiant d’intervention |
+| `intervention_notes` | note locale par intervention |
+| `intervention_photos` | chemin de la photo permanente par intervention |
+| `app_preferences` | préférence `theme_mode` (`system`, `light`, `dark`) |
+
+Les photos ne sont pas stockées dans Hive. Après sélection, elles sont copiées dans le répertoire permanent de l’application fourni par `path_provider`; Hive conserve uniquement leur chemin. Lors d’un remplacement réussi, l’ancienne copie gérée par l’application est supprimée.
+
+## Installation et lancement
+
+Prérequis : Flutter, Dart, Android SDK et un appareil ou émulateur Android. La compilation iOS nécessite macOS et Xcode.
 
 ```bash
 git clone https://github.com/DorianArg/AgriVistaEXAM.git
 cd AgriVistaEXAM
 flutter pub get
+flutter run
 ```
 
-Les fichiers générés sont déjà versionnés. Après modification des DTO, les régénérer avec :
+Les fichiers générés sont versionnés. Après modification des DTO :
 
 ```bash
 dart run build_runner build
 ```
 
-## Lancement et validation
+## Tests et build
 
 ```bash
-flutter pub get
+dart format .
 flutter analyze
 flutter test
-flutter run
-```
-
-Construire l’APK Android debug :
-
-```bash
 flutter build apk --debug
 ```
 
-Le projet a été testé sur un appareil Android réel Samsung SM S926U sous Android 16.
+La suite compte **172 tests automatisés réussis** : Domain, parsing et mapping JSON, erreurs Dio, Hive, repositories, Riverpod, recherche, filtres, tri, refresh, dashboard, détail, statut, note, photo, thèmes, navigation et layouts téléphone/tablette. Aucun pourcentage de couverture n’est annoncé.
 
-## Source des données
+## Validation des plateformes
 
-`https://utrera.ludovic.aflokkat-projet.fr/getInterventions.json`
-
-- requête HTTP GET ;
-- source distante en lecture seule et jamais modifiée ;
-- aucun backend à installer ;
-- aucune configuration Firebase ou Supabase ;
-- connexion réseau nécessaire pour charger les interventions ;
-- changements de statut enregistrés uniquement en local.
-
-## Persistance locale
-
-Hive conserve uniquement les changements de statut dans la box `intervention_statuses` :
-
-```text
-JSON distant + statuts locaux Hive → données affichées
-```
-
-Le JSON reste la référence initiale et Hive surcharge seulement le statut. Il n’existe aucun cache complet du JSON et l’historique distant n’est pas modifié.
-
-## État du projet
-
-- périmètre fonctionnel obligatoire terminé ;
-- Android testé sur appareil réel ;
-- 86 tests automatisés réussis ;
-- `flutter analyze` sans anomalie ;
-- APK debug construit ;
-- persistance après fermeture complète et relance vérifiée manuellement par le développeur ;
-- projet iOS généré.
-
-Le projet iOS est généré et conservé dans le repository. Sa compilation n'a pas été exécutée dans l'environnement Windows utilisé pour le développement et nécessite macOS avec Xcode.
-
-## Tests
-
-La suite compte **86 tests automatisés réussis**. Elle couvre : Domain, transitions de statut, parsing, mapping, JSON invalide, erreurs réseau, Hive, fusion distant/local, Riverpod, retry, recherche, filtres, détail, profil et navigation.
-
-Aucun pourcentage de couverture n’est annoncé.
-
-### Validation manuelle Android
-
-La recette Android a été réalisée manuellement sur appareil réel par le développeur. Elle couvre l’affichage de la liste, la recherche, les filtres, le détail, le changement de statut, le retour liste, le profil, la persistance après fermeture complète et relance, ainsi que l’absence d’overflow visible.
-
-Aucune validation manuelle iOS n’est déclarée.
+- **Android** : APK debug construit. L’application a été installée et lancée sur un Samsung SM S926U sous Android 16/API 36. Un parcours tactile photo complet et la conservation manuelle du thème après fermeture/reprise ne sont pas revendiqués.
+- **Tablette** : layouts vérifiés par tests widgets à 1200 × 900, sans tablette physique ni émulateur tablette.
+- **iOS** : projet généré et accès à la photothèque configuré. Aucune compilation iOS n’a été exécutée dans l’environnement Windows ; elle nécessite macOS/Xcode.
 
 ## Limites
 
-- premier chargement dépendant du réseau ;
-- pas de cache complet offline-first ;
-- aucune synchronisation serveur ou résolution de conflit ;
-- historique non enrichi localement ;
-- compilation iOS non exécutée sous Windows ;
-- fonctionnalités bonus non développées.
+- premier chargement et actualisations dépendants du réseau ;
+- absence de cache JSON complet offline-first ;
+- statuts, notes et photos non synchronisés avec un serveur ;
+- aucune authentification réelle ni résolution de conflit ;
+- historique distant non enrichi localement ;
+- photo choisie depuis la galerie uniquement ;
+- aucune validation manuelle sur tablette ou iOS.
 
-Les documents complets sont accessibles dans la section Livrables : [dossier de conception](docs/Dossier_conception_AgriVista_Field_Dorian_ARGAILLOT.pdf) et [dossier technique](docs/Dossier_technique_AgriVista_Field_Dorian_ARGAILLOT.pdf).
+## Livrables
+
+### Documents de remise
+
+- [Sujet officiel](docs/25-26_mespr-flutter.pdf)
+- [Dossier de conception v1.1 — PDF](docs/Dossier_conception_AgriVista_Field_Dorian_ARGAILLOT_v1_1.pdf)
+- [Dossier technique — PDF](docs/Dossier_technique_AgriVista_Field_Dorian_ARGAILLOT.pdf)
+
+### Source éditable
+
+- [Dossier technique final — Markdown](docs/dossier_technique.md)
+
+Les PDF sont les formats destinés à la remise. Le Markdown constitue la source textuelle actualisée du dossier technique.
